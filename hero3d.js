@@ -18,8 +18,8 @@ const CONFIG = {
   scrub: 0.07,        // scroll inertia
   parallax: 0.5,
   dprMax: 1.5,        // bloom is per-pixel; keep DPR modest
-  bloom: { strength: 1.05, radius: 0.75, threshold: 0.08 },
-  pointSize: 0.17,
+  bloom: { strength: 0.5, radius: 0.55, threshold: 0.22 },
+  pointSize: 0.15,
 };
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -156,9 +156,9 @@ function init() {
   const fNetwork = new Float32Array(COUNT * 3);
   for (let i = 0; i < COUNT; i++) {
     const n = nodes[i % NODES];
-    fNetwork[i * 3] = n.x + (Math.random() - 0.5) * 0.7;
-    fNetwork[i * 3 + 1] = n.y + (Math.random() - 0.5) * 0.7;
-    fNetwork[i * 3 + 2] = n.z + (Math.random() - 0.5) * 0.7;
+    fNetwork[i * 3] = n.x + (Math.random() - 0.5) * 1.5;
+    fNetwork[i * 3 + 1] = n.y + (Math.random() - 0.5) * 1.5;
+    fNetwork[i * 3 + 2] = n.z + (Math.random() - 0.5) * 1.5;
   }
   const edgePairs = [];
   for (let i = 0; i < NODES; i++) {
@@ -220,10 +220,10 @@ function init() {
   // ---- particles ----
   const positions = new Float32Array(fName);
   const colors = new Float32Array(COUNT * 3);
-  const cream = new THREE.Color("#ffe9b8");
-  const red = new THREE.Color("#ff4040");
+  const cream = new THREE.Color("#d9d2bb");
+  const red = new THREE.Color("#a9504a");
   for (let i = 0; i < COUNT; i++) {
-    (Math.random() < 0.1 ? red : cream).toArray(colors, i * 3);
+    (Math.random() < 0.05 ? red : cream).toArray(colors, i * 3);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
@@ -233,7 +233,7 @@ function init() {
     map: makeSprite(),
     vertexColors: true,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.78,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   }));
@@ -245,7 +245,7 @@ function init() {
   const edgeGeo = new THREE.BufferGeometry();
   edgeGeo.setAttribute("position", new THREE.BufferAttribute(edgePos, 3));
   const edgeMat = new THREE.LineBasicMaterial({
-    color: 0xffd9a0,
+    color: 0xa89e80,
     transparent: true,
     opacity: 0,
     blending: THREE.AdditiveBlending,
@@ -255,7 +255,7 @@ function init() {
 
   const pulse = new THREE.Mesh(
     new THREE.SphereGeometry(0.16, 12, 12),
-    new THREE.MeshBasicMaterial({ color: 0xff5a5a, transparent: true, opacity: 0 })
+    new THREE.MeshBasicMaterial({ color: 0xb85e55, transparent: true, opacity: 0 })
   );
   scene.add(pulse);
   const pulsePath = [3, 8, 12, 17, 23].map((i) => nodes[i % NODES]);
@@ -273,9 +273,9 @@ function init() {
   const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
     size: 0.05,
     map: makeSprite(),
-    color: 0x8a7d4a,
+    color: 0x5f5840,
     transparent: true,
-    opacity: 0.35,
+    opacity: 0.18,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   }));
@@ -365,7 +365,7 @@ function init() {
 
     // beat-scoped extras
     const wNet = beatWeight(p, 1);
-    edgeMat.opacity = smooth(wNet) * 0.32;
+    edgeMat.opacity = smooth(wNet) * 0.22;
     if (wNet > 0.4) {
       const t = (now * 0.00035) % 1;
       const segs = pulsePath.length - 1;
