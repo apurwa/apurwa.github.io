@@ -149,3 +149,21 @@
   0%, 100% { opacity: 0.85; transform: translateX(-50%) translateY(0); }
   50% { opacity: 0.35; transform: translateX(-50%) translateY(4px); }
 }
+
+/* landing intro echoes the hero handoff (only when the hero is active) */
+body.hero3d-active .landing-left h1,
+body.hero3d-active .landing-left .profile-portrait {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+body.hero3d-active.hero3d-landed .landing-left h1,
+body.hero3d-active.hero3d-landed .landing-left .profile-portrait {
+  opacity: 1;
+  transform: none;
+}
+
+body.hero3d-active.hero3d-landed .landing-left .profile-portrait {
+  transition-delay: 0.15s;
+}

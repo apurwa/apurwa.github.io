@@ -20,6 +20,8 @@ const CONFIG = {
   dprMax: 1.5,        // bloom is per-pixel; keep DPR modest
   bloom: { strength: 0.5, radius: 0.55, threshold: 0.22 },
   pointSize: 0.15,
+  introMs: 2200,      // load-in: scatter converges into the name
+  introStaggerMs: 700,
 };
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -58,6 +60,20 @@ function init() {
   const cue = band.querySelector(".hero3d-cue");
   const captionWrap = band.querySelector(".hero3d-captions");
   sticky.insertBefore(renderer.domElement, sticky.firstChild);
+
+  // the landing h1/portrait fade in as the hero hands off (echo, not duplicate)
+  document.body.classList.add("hero3d-active");
+  if ("IntersectionObserver" in window) {
+    const landIO = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        document.body.classList.add("hero3d-landed");
+        landIO.disconnect();
+      }
+    }, { threshold: 0.2 });
+    landIO.observe(landing);
+  } else {
+    document.body.classList.add("hero3d-landed");
+  }
 
   const CAPTIONS = [
     { kicker: "", title: "", body: "AI Product Lead — browser agents", pos: "center-low" },
@@ -217,6 +233,21 @@ function init() {
   const formations = [fName, fNetwork, fWave, fOrbit, fGone];
   const SEGS = formations.length - 1;
 
+  // ---- entrance: particles converge from a wide scatter into the name ----
+  const fScatter = new Float32Array(COUNT * 3);
+  const introStagger = new Float32Array(COUNT);
+  for (let i = 0; i < COUNT; i++) {
+    const t = Math.random() * Math.PI * 2;
+    const ph = Math.acos(2 * Math.random() - 1);
+    const r = 16 + Math.random() * 9;
+    fScatter[i * 3] = r * Math.sin(ph) * Math.cos(t);
+    fScatter[i * 3 + 1] = r * Math.sin(ph) * Math.sin(t);
+    fScatter[i * 3 + 2] = r * Math.cos(ph) - 6;
+    introStagger[i] = Math.random();
+  }
+  let introStart = -1;
+  let introDone = false;
+
   // ---- particles ----
   const positions = new Float32Array(fName);
   const colors = new Float32Array(COUNT * 3);
@@ -260,6 +291,48 @@ function init() {
   scene.add(pulse);
   const pulsePath = [3, 8, 12, 17, 23].map((i) => nodes[i % NODES]);
 
+  // ---- line-work for the wave beat: flow lines tracing the surface ----
+  const waveLineMat = new THREE.LineBasicMaterial({
+    color: 0xa89e80,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  [-4, -2, 0, 2, 4].forEach((z) => {
+    const pts = [];
+    for (let x = -11; x <= 11; x += 0.4) {
+      pts.push(new THREE.Vector3(
+        x,
+        Math.sin(x * 0.55) * 1.1 + Math.cos(z * 0.9 + x * 0.3) * 0.8 - 0.6,
+        z
+      ));
+    }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), waveLineMat));
+  });
+
+  // ---- line-work for the orbit beat: the rings themselves ----
+  const ringMat = new THREE.LineBasicMaterial({
+    color: 0xa89e80,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const ringsGroup = new THREE.Group();
+  const ringAxis = new THREE.Vector3(1, 0.4, 0).normalize();
+  for (let k = 0; k < 5; k++) {
+    const r = 2.6 + k * 1.15;
+    const pts = [];
+    for (let s = 0; s <= 72; s++) {
+      const t = (s / 72) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(t) * r, 0, Math.sin(t) * r)
+        .applyAxisAngle(ringAxis, k * 0.22));
+    }
+    ringsGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), ringMat));
+  }
+  scene.add(ringsGroup);
+
   // ---- ambient drift dust ----
   const DUST = 300;
   const dustPos = new Float32Array(DUST * 3);
@@ -295,11 +368,13 @@ function init() {
   let target = 0;
   let mx = 0, my = 0, smx = 0, smy = 0;
   let scrolled = false;
+  let lastScrollInput = 0;
 
   function readScroll() {
     const rect = band.getBoundingClientRect();
     const total = rect.height - sticky.clientHeight;
     target = total > 0 ? Math.max(0, Math.min(1, -rect.top / total)) : 0;
+    lastScrollInput = performance.now();
     if (target > 0.01 && !scrolled) {
       scrolled = true;
       cue.classList.add("is-hidden");
@@ -344,6 +419,16 @@ function init() {
     requestAnimationFrame(frame);
     if (!visible || !pageVisible) return;
 
+    // beat magnetism: when the scroll is idle near a formation, ease the
+    // visual progress onto it so visitors rest ON beats, not between them.
+    if (now - lastScrollInput > 450 && target > 0.01 && target < 0.99) {
+      const bf = target * SEGS;
+      const nearest = Math.round(bf);
+      if (Math.abs(bf - nearest) < 0.4) {
+        target += (nearest / SEGS - target) * 0.03;
+      }
+    }
+
     progress += (target - progress) * CONFIG.scrub;
     smx += (mx - smx) * 0.05;
     smy += (my - smy) * 0.05;
@@ -356,11 +441,31 @@ function init() {
     const A = formations[seg];
     const B = formations[seg + 1];
     const wobble = Math.sin(now * 0.0011) * 0.018;
-    for (let i = 0; i < positions.length; i += 3) {
-      positions[i] = A[i] + (B[i] - A[i]) * local + Math.sin(now * 0.001 + i) * wobble;
-      positions[i + 1] = A[i + 1] + (B[i + 1] - A[i + 1]) * local + Math.cos(now * 0.0013 + i) * wobble;
-      positions[i + 2] = A[i + 2] + (B[i + 2] - A[i + 2]) * local;
+    const introActive = !introDone;
+    let introElapsed = 0;
+    if (introActive) {
+      if (introStart < 0) introStart = now;
+      introElapsed = now - introStart;
     }
+    for (let n = 0; n < COUNT; n++) {
+      const i = n * 3;
+      let x = A[i] + (B[i] - A[i]) * local + Math.sin(now * 0.001 + i) * wobble;
+      let y = A[i + 1] + (B[i + 1] - A[i + 1]) * local + Math.cos(now * 0.0013 + i) * wobble;
+      let z = A[i + 2] + (B[i + 2] - A[i + 2]) * local;
+      if (introActive) {
+        const il = smooth(clamp01(
+          (introElapsed - introStagger[n] * CONFIG.introStaggerMs) /
+          (CONFIG.introMs - CONFIG.introStaggerMs)
+        ));
+        x = fScatter[i] + (x - fScatter[i]) * il;
+        y = fScatter[i + 1] + (y - fScatter[i + 1]) * il;
+        z = fScatter[i + 2] + (z - fScatter[i + 2]) * il;
+      }
+      positions[i] = x;
+      positions[i + 1] = y;
+      positions[i + 2] = z;
+    }
+    if (introActive && introElapsed >= CONFIG.introMs) introDone = true;
     geo.attributes.position.needsUpdate = true;
 
     // beat-scoped extras
@@ -377,8 +482,13 @@ function init() {
       pulse.material.opacity = 0;
     }
 
-    // orbital beat: slow rotation of the whole field
+    // wave + orbit line-work fades with its beat
+    waveLineMat.opacity = smooth(beatWeight(p, 2)) * 0.16;
+    ringMat.opacity = smooth(beatWeight(p, 3)) * 0.2;
+
+    // orbital beat: slow rotation of the whole field (rings stay in sync)
     points.rotation.y = beatWeight(p, 3) * now * 0.00012;
+    ringsGroup.rotation.y = points.rotation.y;
 
     // camera: lerp between beat keyframes + parallax
     const ca = camBeats[seg];
