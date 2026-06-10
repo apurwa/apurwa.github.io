@@ -10,7 +10,6 @@
 
 const CONFIG = {
   bandVh: 520,        // scroll length (5 beats)
-  scrub: 0.07,        // scroll inertia
   parallax: 0.5,
   dprMax: 1.5,        // bloom is per-pixel; keep DPR modest
   bloom: { strength: 0.5, radius: 0.55, threshold: 0.22 },
@@ -392,8 +391,13 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
   ];
 
   // ---- scroll + pointer ----
+  // progress chases target with spring physics (omega = response speed in
+  // rad/s, zeta < 1 = slightly underdamped for a gentle settle-bounce)
+  const SPRING = { omega: 6, zeta: 0.8 };
   let progress = 0;
   let target = 0;
+  let vel = 0;
+  let lastFrame = performance.now();
   let mx = 0, my = 0, smx = 0, smy = 0;
   let scrolled = false;
   let lastScrollInput = 0;
@@ -419,11 +423,8 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
   const SNAP = {
     idleMs: 140,     // gesture considered settled after this much scroll silence
     threshold: 0.22, // fraction of a beat you must scroll to commit to the next
-    overshoot: 1.2,  // easeOutBack strength: the spring's little bounce
   };
   let currentBeat = 0;
-  let snapping = false;
-  let snapRaf = 0;
 
   function beatScrollY(beat) {
     const rect = band.getBoundingClientRect();
@@ -431,34 +432,13 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
     return rect.top + window.scrollY + (beat / SEGS) * total;
   }
 
-  function cancelSnap() {
-    if (snapping) {
-      cancelAnimationFrame(snapRaf);
-      snapping = false;
-    }
-  }
-  // a new gesture mid-snap hands control straight back to the visitor
-  ["wheel", "touchstart", "keydown"].forEach((ev) =>
-    window.addEventListener(ev, cancelSnap, { passive: true })
-  );
-
+  // The stage is sticky, so the raw scroll position is invisible: only the
+  // progress derived from it matters. Jump the real scroll instantly and let
+  // the progress spring (see frame loop) glide the visuals onto the beat.
   function snapTo(beat) {
-    const from = window.scrollY;
-    const to = beatScrollY(beat);
     currentBeat = beat;
-    if (Math.abs(to - from) < 2) return;
-    const dur = Math.min(900, Math.max(420, Math.abs(to - from) * 0.9));
-    const s = SNAP.overshoot;
-    const ease = (t) => { t -= 1; return t * t * ((s + 1) * t + s) + 1; };
-    snapping = true;
-    const start = performance.now();
-    (function step(now) {
-      if (!snapping) return;
-      const t = Math.min(1, (now - start) / dur);
-      window.scrollTo(0, from + (to - from) * ease(t));
-      if (t < 1) snapRaf = requestAnimationFrame(step);
-      else snapping = false;
-    })(start);
+    window.scrollTo(0, beatScrollY(beat));
+    readScroll();
   }
 
   window.addEventListener("pointermove", (e) => {
@@ -501,7 +481,7 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
     // spring back to the current one (slider behavior, see SNAP above)
     if (target <= 0.001) currentBeat = 0;
     else if (target >= 0.999) currentBeat = SEGS;
-    if (!snapping && now - lastScrollInput > SNAP.idleMs &&
+    if (now - lastScrollInput > SNAP.idleMs &&
         target > 0.001 && target < 0.999) {
       const bf = target * SEGS;
       const delta = bf - currentBeat;
@@ -515,7 +495,13 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
       else currentBeat = dest;
     }
 
-    progress += (target - progress) * CONFIG.scrub;
+    // slightly underdamped spring: smooth follow while scrolling, a soft
+    // physical settle (with a hint of bounce) when snapping onto a beat
+    const dt = Math.min(0.05, (now - lastFrame) / 1000);
+    lastFrame = now;
+    vel += ((target - progress) * SPRING.omega * SPRING.omega -
+            2 * SPRING.zeta * SPRING.omega * vel) * dt;
+    progress += vel * dt;
     smx += (mx - smx) * 0.05;
     smy += (my - smy) * 0.05;
     const p = clamp01(progress);
