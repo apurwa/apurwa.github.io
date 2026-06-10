@@ -3,13 +3,14 @@
 // Sits behind all content (z-index 0); the dark hero band covers it while
 // in view. Desktop + WebGL + motion-ok only; otherwise the site is unchanged.
 
-import * as THREE from "three";
-
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const desktop = window.matchMedia("(min-width: 900px) and (pointer: fine)").matches;
-if (desktop && !reducedMotion) init();
+// dynamic import inside the gate: non-desktop visitors download nothing
+if (desktop && !reducedMotion) {
+  import("three").then(init).catch(() => {});
+}
 
-function init() {
+function init(THREE) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });

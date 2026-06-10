@@ -8,11 +8,6 @@
 // Injected entirely from JS: no-JS, mobile, reduced-motion, and WebGL-less
 // visitors see the site unchanged.
 
-import * as THREE from "three";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-
 const CONFIG = {
   bandVh: 520,        // scroll length (5 beats)
   scrub: 0.07,        // scroll inertia
@@ -26,9 +21,30 @@ const CONFIG = {
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const desktop = window.matchMedia("(min-width: 900px) and (pointer: fine)").matches;
-if (desktop && !reducedMotion) init();
+// three.js is dynamically imported INSIDE the gate so phones, reduced-motion,
+// and small windows never download a byte of it.
+if (desktop && !reducedMotion) boot();
 
-function init() {
+async function boot() {
+  let THREE, EffectComposer, RenderPass, UnrealBloomPass;
+  try {
+    const [three, ec, rp, ub] = await Promise.all([
+      import("three"),
+      import("three/addons/postprocessing/EffectComposer.js"),
+      import("three/addons/postprocessing/RenderPass.js"),
+      import("three/addons/postprocessing/UnrealBloomPass.js"),
+    ]);
+    THREE = three;
+    EffectComposer = ec.EffectComposer;
+    RenderPass = rp.RenderPass;
+    UnrealBloomPass = ub.UnrealBloomPass;
+  } catch (err) {
+    return; // module fetch failed -> site stays as-is
+  }
+  init(THREE, EffectComposer, RenderPass, UnrealBloomPass);
+}
+
+function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
