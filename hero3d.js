@@ -393,7 +393,7 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
   // ---- scroll + pointer ----
   // progress chases target with spring physics (omega = response speed in
   // rad/s, zeta < 1 = slightly underdamped for a gentle settle-bounce)
-  const SPRING = { omega: 6, zeta: 0.8 };
+  const SPRING = { omega: 3.8, zeta: 0.88 };
   let progress = 0;
   let target = 0;
   let vel = 0;
@@ -422,7 +422,7 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
   // captions, and morph all stay in sync.
   const SNAP = {
     idleMs: 140,     // gesture considered settled after this much scroll silence
-    threshold: 0.22, // fraction of a beat you must scroll to commit to the next
+    threshold: 0.42, // fraction of a beat you must scroll to commit to the next
   };
   let currentBeat = 0;
 
@@ -487,9 +487,9 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
       const delta = bf - currentBeat;
       let dest = currentBeat;
       if (Math.abs(delta) >= SNAP.threshold) {
-        // a long fling can earn several beats; a committed nudge earns one
-        dest = Math.max(0, Math.min(SEGS,
-          currentBeat + Math.sign(delta) * Math.max(1, Math.round(Math.abs(delta)))));
+        // one beat per gesture, however hard the fling: keeps a small scroll
+        // from exploding into a multi-formation jump
+        dest = Math.max(0, Math.min(SEGS, currentBeat + Math.sign(delta)));
       }
       if (Math.abs(bf - dest) > 0.005) snapTo(dest);
       else currentBeat = dest;
