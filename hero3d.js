@@ -411,6 +411,56 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
   window.addEventListener("scroll", readScroll, { passive: true });
   readScroll();
 
+  // ---- beat snap: the band scrolls like a slide deck ----
+  // When a gesture settles, either commit to the next beat (scrolled past the
+  // threshold) or spring back to the current one — never rest between
+  // formations. The page scroll itself is animated so the scrollbar,
+  // captions, and morph all stay in sync.
+  const SNAP = {
+    idleMs: 140,     // gesture considered settled after this much scroll silence
+    threshold: 0.22, // fraction of a beat you must scroll to commit to the next
+    overshoot: 1.2,  // easeOutBack strength: the spring's little bounce
+  };
+  let currentBeat = 0;
+  let snapping = false;
+  let snapRaf = 0;
+
+  function beatScrollY(beat) {
+    const rect = band.getBoundingClientRect();
+    const total = rect.height - sticky.clientHeight;
+    return rect.top + window.scrollY + (beat / SEGS) * total;
+  }
+
+  function cancelSnap() {
+    if (snapping) {
+      cancelAnimationFrame(snapRaf);
+      snapping = false;
+    }
+  }
+  // a new gesture mid-snap hands control straight back to the visitor
+  ["wheel", "touchstart", "keydown"].forEach((ev) =>
+    window.addEventListener(ev, cancelSnap, { passive: true })
+  );
+
+  function snapTo(beat) {
+    const from = window.scrollY;
+    const to = beatScrollY(beat);
+    currentBeat = beat;
+    if (Math.abs(to - from) < 2) return;
+    const dur = Math.min(900, Math.max(420, Math.abs(to - from) * 0.9));
+    const s = SNAP.overshoot;
+    const ease = (t) => { t -= 1; return t * t * ((s + 1) * t + s) + 1; };
+    snapping = true;
+    const start = performance.now();
+    (function step(now) {
+      if (!snapping) return;
+      const t = Math.min(1, (now - start) / dur);
+      window.scrollTo(0, from + (to - from) * ease(t));
+      if (t < 1) snapRaf = requestAnimationFrame(step);
+      else snapping = false;
+    })(start);
+  }
+
   window.addEventListener("pointermove", (e) => {
     mx = (e.clientX / window.innerWidth - 0.5) * 2;
     my = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -447,14 +497,22 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
     requestAnimationFrame(frame);
     if (!visible || !pageVisible) return;
 
-    // beat magnetism: when the scroll is idle near a formation, ease the
-    // visual progress onto it so visitors rest ON beats, not between them.
-    if (now - lastScrollInput > 450 && target > 0.01 && target < 0.99) {
+    // beat snap: once the gesture settles, advance to the beat it earned or
+    // spring back to the current one (slider behavior, see SNAP above)
+    if (target <= 0.001) currentBeat = 0;
+    else if (target >= 0.999) currentBeat = SEGS;
+    if (!snapping && now - lastScrollInput > SNAP.idleMs &&
+        target > 0.001 && target < 0.999) {
       const bf = target * SEGS;
-      const nearest = Math.round(bf);
-      if (Math.abs(bf - nearest) < 0.4) {
-        target += (nearest / SEGS - target) * 0.03;
+      const delta = bf - currentBeat;
+      let dest = currentBeat;
+      if (Math.abs(delta) >= SNAP.threshold) {
+        // a long fling can earn several beats; a committed nudge earns one
+        dest = Math.max(0, Math.min(SEGS,
+          currentBeat + Math.sign(delta) * Math.max(1, Math.round(Math.abs(delta)))));
       }
+      if (Math.abs(bf - dest) > 0.005) snapTo(dest);
+      else currentBeat = dest;
     }
 
     progress += (target - progress) * CONFIG.scrub;
