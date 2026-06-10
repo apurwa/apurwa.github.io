@@ -1,37 +1,48 @@
-/* ASCII hero band — see hero3d.js. Injected only on desktop with JS+WebGL. */
+/* Scroll-driven 3D hero band — see hero3d.js. Injected only on desktop with JS+WebGL. */
 
 .hero3d {
   position: relative;
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  height: 86svh;
-  min-height: 480px;
-  overflow: hidden;
-  background: var(--bg);
 }
 
-.hero3d-ascii {
+.hero3d-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: #1a1c16;
+}
+
+.hero3d-sticky canvas {
   position: absolute;
   inset: 0;
-  color: var(--accent);
-  background-color: var(--bg);
-  font-family: "Geist Mono", "Menlo", monospace;
-  white-space: pre;
-  text-align: center;
-  user-select: none;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.hero3d-fade {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  opacity: 0;
   pointer-events: none;
+  z-index: 2;
 }
 
 .hero3d-cue {
   position: absolute;
-  bottom: 18px;
+  bottom: 22px;
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
+  z-index: 3;
   font-size: 0.72rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: rgba(247, 239, 207, 0.75);
   animation: hero3d-cue 2.4s ease-in-out infinite;
 }
 
@@ -39,19 +50,13 @@
   content: " ↓";
 }
 
-.hero3d.is-dissolved .hero3d-cue {
+.hero3d-cue.is-hidden {
   opacity: 0;
-  transition: opacity 0.6s ease;
+  transition: opacity 0.5s ease;
   animation: none;
 }
 
 @keyframes hero3d-cue {
   0%, 100% { opacity: 0.85; transform: translateX(-50%) translateY(0); }
   50% { opacity: 0.35; transform: translateX(-50%) translateY(4px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero3d-cue {
-    animation: none;
-  }
 }

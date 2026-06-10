@@ -1,293 +1,253 @@
-// ASCII hero: monospace particles assemble the name, dissolve into an agent
-// workflow graph, and a pulse executes pipelines forever. Rendered through
-// three.js AsciiEffect — red glyphs on the site's cream.
+// Scroll-driven 3D hero: the visitor's scroll flies a camera through a dark
+// world of floating career stations (title -> products -> say hello), then
+// hands off to the regular site. Inertia-smoothed scrub + mouse parallax.
 //
-// Injected entirely from JS: no-JS visitors and unsupported devices see the
-// site unchanged. Desktop-only by design (full-viewport ASCII is CPU-heavy).
+// Injected entirely from JS: no-JS visitors, mobile, reduced-motion, and
+// WebGL-less browsers see the site unchanged.
 
 import * as THREE from "three";
-import { AsciiEffect } from "three/addons/effects/AsciiEffect.js";
-import { buildGraph, makeAgentRun } from "./hero3d-graph.js";
 
 const CONFIG = {
-  assembleMs: 2400,     // scatter -> name
-  assembleStaggerMs: 600,
-  holdMs: 6000,         // name hold before auto-dissolve (scroll skips ahead)
-  dissolveMs: 1800,     // name -> graph
-  fps: 30,              // render cap
-  fontPx: 10,           // ascii cell size
-  resolution: 0.12,     // ascii sampling resolution
-  charSet: " .:-+*=%@#",
+  bandVh: 420,          // total scroll length of the band, in vh
+  scrub: 0.075,         // camera inertia (lerp factor per frame)
+  parallax: 0.45,       // mouse parallax amplitude
+  stationGap: 14,       // z distance between stations
+  dprMax: 1.75,
 };
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const desktop = window.matchMedia("(min-width: 900px) and (pointer: fine)").matches;
-if (!desktop) {
-  // Mobile/touch: current site, unchanged.
-} else {
-  init();
-}
+if (desktop && !reducedMotion) init();
 
 function init() {
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: false });
-    renderer.setPixelRatio(1);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.dprMax));
   } catch (err) {
-    return; // no WebGL -> no hero band
+    return;
   }
 
-  // ---- band injection ----
-  const band = document.createElement("section");
-  band.className = "hero3d";
-  band.setAttribute("aria-hidden", "true");
-  const cue = document.createElement("p");
-  cue.className = "hero3d-cue";
-  cue.textContent = "scroll";
-  band.appendChild(cue);
+  // ---- band + sticky stage injection ----
   const main = document.querySelector("main");
   const landing = document.querySelector(".landing");
   if (!main || !landing) return;
-  main.insertBefore(band, landing);
 
-  const W = () => band.clientWidth;
-  const H = () => band.clientHeight;
+  const band = document.createElement("section");
+  band.className = "hero3d";
+  band.style.height = CONFIG.bandVh + "vh";
+  band.setAttribute("aria-hidden", "true");
+  band.innerHTML =
+    '<div class="hero3d-sticky">' +
+    '<div class="hero3d-fade"></div>' +
+    '<p class="hero3d-cue">scroll</p>' +
+    "</div>";
+  main.insertBefore(band, landing);
+  const sticky = band.querySelector(".hero3d-sticky");
+  const fade = band.querySelector(".hero3d-fade");
+  const cue = band.querySelector(".hero3d-cue");
+  sticky.insertBefore(renderer.domElement, fade);
+
+  const W = () => sticky.clientWidth;
+  const H = () => sticky.clientHeight;
   renderer.setSize(W(), H());
 
-  const effect = new AsciiEffect(renderer, CONFIG.charSet, {
-    invert: false,
-    resolution: CONFIG.resolution,
-  });
-  effect.setSize(W(), H());
-  effect.domElement.className = "hero3d-ascii";
-  effect.domElement.style.fontSize = CONFIG.fontPx + "px";
-  effect.domElement.style.lineHeight = CONFIG.fontPx + "px";
-  band.insertBefore(effect.domElement, cue);
-
-  // ---- scene ----
+  // ---- scene & atmosphere ----
+  const INK = 0x1a1c16;
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(50, W() / H(), 0.1, 100);
-  camera.position.set(0, 0, 21);
+  scene.background = new THREE.Color(INK);
+  scene.fog = new THREE.Fog(INK, 8, 46);
 
-  const group = new THREE.Group();
-  scene.add(group);
+  const camera = new THREE.PerspectiveCamera(58, W() / H(), 0.1, 120);
 
-  // ---- name targets: sample two stacked lines from a canvas ----
-  const cv = document.createElement("canvas");
-  cv.width = 560;
-  cv.height = 260;
-  const cx = cv.getContext("2d");
-  cx.fillStyle = "#fff";
-  cx.font = "bold 86px monospace";
-  cx.textAlign = "center";
-  cx.fillText("APURWA", 280, 95);
-  cx.fillText("SARWAJIT", 280, 205);
-  const img = cx.getImageData(0, 0, cv.width, cv.height).data;
-  const textTargets = [];
-  for (let y = 0; y < cv.height; y += 4) {
-    for (let x = 0; x < cv.width; x += 4) {
-      if (img[(y * cv.width + x) * 4] > 128) {
-        textTargets.push(new THREE.Vector3(
-          (x - cv.width / 2) * 0.034,
-          -(y - cv.height / 2) * 0.034,
-          (Math.random() - 0.5) * 0.3
-        ));
+  scene.add(new THREE.AmbientLight(0xfff6dd, 0.55));
+  const key = new THREE.DirectionalLight(0xfff6dd, 1.6);
+  key.position.set(5, 9, 6);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x9d0006, 0.7);
+  rim.position.set(-6, -3, -4);
+  scene.add(rim);
+
+  // ---- station builder: cream panel, ink text, red frame ----
+  function makeLabelTexture(title, sub, big) {
+    const cv = document.createElement("canvas");
+    cv.width = 1024;
+    cv.height = 512;
+    const cx = cv.getContext("2d");
+    cx.fillStyle = "#f7efcf";
+    cx.fillRect(0, 0, 1024, 512);
+    cx.fillStyle = "#9d0006";
+    cx.fillRect(64, 96, 88, 14);
+    cx.fillStyle = "#1f211b";
+    cx.textBaseline = "top";
+    cx.font = "bold " + (big ? 104 : 92) + "px Menlo, monospace";
+    cx.fillText(title, 64, 160, 896);
+    cx.fillStyle = "#6f653b";
+    cx.font = "44px Menlo, monospace";
+    const words = sub.split(" ");
+    let line = "";
+    let y = big ? 320 : 300;
+    words.forEach((w) => {
+      if (cx.measureText(line + w).width > 880) {
+        cx.fillText(line, 64, y);
+        y += 62;
+        line = "";
       }
-    }
-  }
-  const COUNT = textTargets.length;
-
-  // ---- graph targets: particles cluster around graph nodes ----
-  const graph = buildGraph();
-  const N = graph.nodes.length;
-  const graphTargets = [];
-  for (let i = 0; i < COUNT; i++) {
-    const n = graph.nodes[i % N];
-    graphTargets.push(new THREE.Vector3(
-      n.x + (Math.random() - 0.5) * 0.85,
-      n.y + (Math.random() - 0.5) * 0.85,
-      n.z + (Math.random() - 0.5) * 0.85
-    ));
-  }
-
-  // ---- scatter start positions ----
-  const scatter = [];
-  for (let i = 0; i < COUNT; i++) {
-    const t = Math.random() * Math.PI * 2;
-    const p = Math.acos(2 * Math.random() - 1);
-    const r = 13 + Math.random() * 6;
-    scatter.push(new THREE.Vector3(
-      r * Math.sin(p) * Math.cos(t),
-      r * Math.sin(p) * Math.sin(t),
-      r * Math.cos(p)
-    ));
-  }
-
-  // ---- particles as instanced spheres (bright enough for ascii) ----
-  const PARTICLE_R = 0.085;
-  const mesh = new THREE.InstancedMesh(
-    new THREE.SphereGeometry(PARTICLE_R, 6, 6),
-    new THREE.MeshBasicMaterial({ color: 0xffffff }),
-    COUNT
-  );
-  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  group.add(mesh);
-  const dummy = new THREE.Object3D();
-  const stagger = new Float32Array(COUNT);
-  for (let i = 0; i < COUNT; i++) stagger[i] = Math.random();
-
-  // ---- edges: thin cylinders, fade in during dissolve ----
-  const edgeMats = [];
-  const up = new THREE.Vector3(0, 1, 0);
-  graph.edges.forEach(([a, b]) => {
-    const va = graph.nodes[a];
-    const vb = graph.nodes[b];
-    const dir = new THREE.Vector3().subVectors(vb, va);
-    const len = dir.length();
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0x555555,
-      transparent: true,
-      opacity: 0,
+      line += w + " ";
     });
-    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, len, 5), mat);
-    cyl.position.copy(va).addScaledVector(dir, 0.5);
-    cyl.quaternion.setFromUnitVectors(up, dir.clone().normalize());
-    group.add(cyl);
-    edgeMats.push(mat);
+    cx.fillText(line, 64, y);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return tex;
+  }
+
+  function makeStation(title, sub, pos, yRot, big) {
+    const group = new THREE.Group();
+    const panel = new THREE.Mesh(
+      new THREE.BoxGeometry(7.2, 3.6, 0.16),
+      new THREE.MeshStandardMaterial({
+        map: makeLabelTexture(title, sub, big),
+        roughness: 0.62,
+      })
+    );
+    group.add(panel);
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(7.5, 3.9, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x9d0006, roughness: 0.45 })
+    );
+    frame.position.z = -0.09;
+    group.add(frame);
+    group.position.copy(pos);
+    group.rotation.y = yRot;
+    scene.add(group);
+    return group;
+  }
+
+  const GAP = CONFIG.stationGap;
+  const stations = [
+    makeStation("APURWA SARWAJIT", "AI Product Lead — browser agents for enterprises",
+      new THREE.Vector3(0, 0.2, -2), 0, true),
+    makeStation("AI STUDIO", "Production browser agents — $1M contracted in year one",
+      new THREE.Vector3(-3.8, 0.6, -2 - GAP), 0.42, false),
+    makeStation("FRAUD SCORE", "$4M ARR in 24 months — India's top 6 banks",
+      new THREE.Vector3(3.8, -0.4, -2 - GAP * 2), -0.42, false),
+    makeStation("SCORE ENGINE", "50M+ transactions a month across 35+ clients",
+      new THREE.Vector3(-3.8, 0.4, -2 - GAP * 3), 0.42, false),
+    makeStation("SAY HELLO", "apurvsingh28@gmail.com — the full story is below",
+      new THREE.Vector3(0, 0.1, -2 - GAP * 4), 0, true),
+  ];
+
+  // ---- floating dust for depth ----
+  const DUST = 700;
+  const dustPos = new Float32Array(DUST * 3);
+  for (let i = 0; i < DUST; i++) {
+    dustPos[i * 3] = (Math.random() - 0.5) * 44;
+    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 20;
+    dustPos[i * 3 + 2] = 6 - Math.random() * (GAP * 4 + 24);
+  }
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
+  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+    color: 0xd7c783,
+    size: 0.06,
+    transparent: true,
+    opacity: 0.55,
+  }));
+  scene.add(dust);
+
+  // red guide line running through the world (the "path")
+  const guidePts = [];
+  for (let i = 0; i <= 60; i++) {
+    const z = 4 - (i / 60) * (GAP * 4 + 14);
+    guidePts.push(new THREE.Vector3(Math.sin(i * 0.45) * 0.5, -2.6 + Math.sin(i * 0.3) * 0.2, z));
+  }
+  scene.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(guidePts),
+    new THREE.LineBasicMaterial({ color: 0x9d0006, transparent: true, opacity: 0.5 })
+  ));
+
+  // ---- camera path: weaves past each station ----
+  const pathPts = [new THREE.Vector3(0, 0.3, 7)];
+  stations.forEach((s, i) => {
+    pathPts.push(new THREE.Vector3(s.position.x * 0.32, s.position.y * 0.4 + 0.2, s.position.z + 5.6));
   });
+  pathPts.push(new THREE.Vector3(0, 0.3, stations[stations.length - 1].position.z - 6));
+  const path = new THREE.CatmullRomCurve3(pathPts, false, "catmullrom", 0.6);
 
-  // ---- the agent pulse ----
-  const pulse = new THREE.Mesh(
-    new THREE.SphereGeometry(0.5, 12, 12),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
-  );
-  group.add(pulse);
+  // ---- scroll + mouse state ----
+  let progress = 0;       // smoothed
+  let targetProgress = 0; // raw from scroll
+  let mx = 0, my = 0, smx = 0, smy = 0;
+  let scrolled = false;
 
-  // visited state: scale up that node's particle cluster
-  const visited = new Uint8Array(N);
-  const setNodeVisited = (i, on) => { visited[i] = on ? 1 : 0; };
-  const run = makeAgentRun(graph, setNodeVisited, pulse);
-
-  // ---- phase machine ----
-  const PHASE = { ASSEMBLE: 0, HOLD: 1, DISSOLVE: 2, LIVE: 3 };
-  let phase = PHASE.ASSEMBLE;
-  let phaseStart = performance.now();
-
-  function setPhase(p) {
-    phase = p;
-    phaseStart = performance.now();
-    if (p === PHASE.DISSOLVE) band.classList.add("is-dissolved");
-  }
-
-  function requestDissolve() {
-    if (phase === PHASE.HOLD || phase === PHASE.ASSEMBLE) setPhase(PHASE.DISSOLVE);
-  }
-  window.addEventListener("wheel", requestDissolve, { passive: true });
-  window.addEventListener("touchmove", requestDissolve, { passive: true });
-  window.addEventListener("scroll", requestDissolve, { passive: true });
-
-  const smooth = (x) => x * x * (3 - 2 * x);
-  const clamp01 = (x) => Math.max(0, Math.min(1, x));
-
-  function layoutParticles(now) {
-    const elapsed = now - phaseStart;
-    for (let i = 0; i < COUNT; i++) {
-      let p;
-      if (phase === PHASE.ASSEMBLE) {
-        const local = clamp01(
-          (elapsed - stagger[i] * CONFIG.assembleStaggerMs) /
-          (CONFIG.assembleMs - CONFIG.assembleStaggerMs)
-        );
-        p = scatter[i].clone().lerp(textTargets[i], smooth(local));
-      } else if (phase === PHASE.HOLD) {
-        p = textTargets[i].clone();
-        p.x += Math.sin(now * 0.002 + i) * 0.025;
-        p.y += Math.cos(now * 0.0017 + i * 1.7) * 0.025;
-      } else if (phase === PHASE.DISSOLVE) {
-        const local = smooth(clamp01(elapsed / CONFIG.dissolveMs));
-        p = textTargets[i].clone().lerp(graphTargets[i], local);
-      } else {
-        p = graphTargets[i];
-      }
-      const scale = phase === PHASE.LIVE && visited[i % N] ? 1.6 : 1;
-      dummy.position.copy(p);
-      dummy.scale.setScalar(scale);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
+  function readScroll() {
+    const rect = band.getBoundingClientRect();
+    const total = rect.height - sticky.clientHeight;
+    targetProgress = total > 0 ? Math.max(0, Math.min(1, -rect.top / total)) : 0;
+    if (targetProgress > 0.01 && !scrolled) {
+      scrolled = true;
+      cue.classList.add("is-hidden");
     }
-    mesh.instanceMatrix.needsUpdate = true;
   }
+  window.addEventListener("scroll", readScroll, { passive: true });
+  readScroll();
 
-  // ---- render loop: 30fps cap, paused when offscreen or tab hidden ----
-  let visible = true;
-  let pageVisible = !document.hidden;
-  let acc = 0;
-  let last = performance.now();
-  const frameMs = 1000 / CONFIG.fps;
-
-  if ("IntersectionObserver" in window) {
-    new IntersectionObserver((entries) => {
-      visible = entries[0].isIntersecting;
-    }, { threshold: 0.05 }).observe(band);
-  }
-  document.addEventListener("visibilitychange", () => {
-    pageVisible = !document.hidden;
-    last = performance.now();
-  });
+  window.addEventListener("pointermove", (e) => {
+    mx = (e.clientX / window.innerWidth - 0.5) * 2;
+    my = (e.clientY / window.innerHeight - 0.5) * 2;
+  }, { passive: true });
 
   window.addEventListener("resize", () => {
     renderer.setSize(W(), H());
-    effect.setSize(W(), H());
     camera.aspect = W() / H();
     camera.updateProjectionMatrix();
   });
 
+  // ---- render loop: pauses offscreen / hidden tab ----
+  let visible = true;
+  let pageVisible = !document.hidden;
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver((entries) => {
+      visible = entries[0].isIntersecting;
+    }, { threshold: 0 }).observe(band);
+  }
+  document.addEventListener("visibilitychange", () => {
+    pageVisible = !document.hidden;
+  });
+
+  const camPos = new THREE.Vector3();
+  const lookAt = new THREE.Vector3();
+
   function frame(now) {
     requestAnimationFrame(frame);
-    if (!visible || !pageVisible) {
-      last = now;
-      return;
-    }
-    acc += now - last;
-    last = now;
-    if (acc < frameMs) return;
-    const dt = Math.min(acc / 1000, 0.1);
-    acc = 0;
+    if (!visible || !pageVisible) return;
 
-    const elapsed = now - phaseStart;
-    if (phase === PHASE.ASSEMBLE && elapsed >= CONFIG.assembleMs) setPhase(PHASE.HOLD);
-    else if (phase === PHASE.HOLD && elapsed >= CONFIG.holdMs) setPhase(PHASE.DISSOLVE);
-    else if (phase === PHASE.DISSOLVE && elapsed >= CONFIG.dissolveMs) {
-      setPhase(PHASE.LIVE);
-      pulse.material.opacity = 1;
-    }
+    progress += (targetProgress - progress) * CONFIG.scrub;
+    smx += (mx - smx) * 0.06;
+    smy += (my - smy) * 0.06;
 
-    if (phase === PHASE.DISSOLVE) {
-      const k = smooth(clamp01(elapsed / CONFIG.dissolveMs));
-      edgeMats.forEach((m) => { m.opacity = k * 0.8; });
-    }
+    const p = Math.max(0, Math.min(1, progress));
+    path.getPointAt(p, camPos);
+    camPos.x += smx * CONFIG.parallax;
+    camPos.y += -smy * CONFIG.parallax * 0.6;
+    camera.position.copy(camPos);
+    path.getPointAt(Math.min(p + 0.05, 1), lookAt);
+    lookAt.x += smx * CONFIG.parallax * 1.6;
+    lookAt.y += -smy * CONFIG.parallax;
+    camera.lookAt(lookAt);
 
-    if (phase === PHASE.LIVE) {
-      run(dt);
-      pulse.scale.setScalar(1 + Math.sin(now * 0.009) * 0.25);
-      group.rotation.y = Math.sin(now * 0.00015) * 0.28;
-      group.rotation.x = Math.sin(now * 0.00011) * 0.08;
-    }
+    stations.forEach((s, i) => {
+      s.position.y += Math.sin(now * 0.001 + i * 1.9) * 0.0012;
+      s.rotation.z = Math.sin(now * 0.0006 + i) * 0.02;
+    });
+    dust.rotation.z = now * 0.00001;
 
-    layoutParticles(now);
-    effect.render(scene, camera);
+    // hand off to the cream site near the end of the band
+    const f = Math.max(0, (p - 0.86) / 0.14);
+    fade.style.opacity = (f * f).toFixed(3);
+
+    renderer.render(scene, camera);
   }
-
-  if (reducedMotion) {
-    // Static frame: completed graph, no animation, no loop.
-    setPhase(PHASE.LIVE);
-    edgeMats.forEach((m) => { m.opacity = 0.8; });
-    pulse.material.opacity = 0;
-    band.classList.add("is-dissolved");
-    layoutParticles(performance.now());
-    effect.render(scene, camera);
-    return;
-  }
-
   requestAnimationFrame(frame);
 }
