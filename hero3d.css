@@ -1,0 +1,57 @@
+/* ASCII hero band — see hero3d.js. Injected only on desktop with JS+WebGL. */
+
+.hero3d {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  height: 86svh;
+  min-height: 480px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.hero3d-ascii {
+  position: absolute;
+  inset: 0;
+  color: var(--accent);
+  background-color: var(--bg);
+  font-family: "Geist Mono", "Menlo", monospace;
+  white-space: pre;
+  text-align: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+.hero3d-cue {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  animation: hero3d-cue 2.4s ease-in-out infinite;
+}
+
+.hero3d-cue::after {
+  content: " ↓";
+}
+
+.hero3d.is-dissolved .hero3d-cue {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  animation: none;
+}
+
+@keyframes hero3d-cue {
+  0%, 100% { opacity: 0.85; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 0.35; transform: translateX(-50%) translateY(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero3d-cue {
+    animation: none;
+  }
+}
