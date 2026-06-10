@@ -71,11 +71,24 @@ function init() {
   }));
   scene.add(points);
 
+  // displacement layer: cursor repulsion + scroll kicks, decaying back to drift
+  const disp = new Float32Array(COUNT * 3);
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2(2, 2); // offscreen until first pointermove
+  const pt = new THREE.Vector3();
+  const closest = new THREE.Vector3();
+  const push = new THREE.Vector3();
+  const REPULSE_RADIUS = 3.6;
+  const REPULSE_STRENGTH = 0.085;
+
   let mx = 0, my = 0, smx = 0, smy = 0;
   window.addEventListener("pointermove", (e) => {
     mx = (e.clientX / window.innerWidth - 0.5) * 2;
     my = (e.clientY / window.innerHeight - 0.5) * 2;
+    ndc.set(mx, -my);
   }, { passive: true });
+
+  let lastScrollY = window.scrollY;
 
   window.addEventListener("resize", () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -102,13 +115,39 @@ function init() {
     if (acc < frameMs) return;
     acc = 0;
 
+    // scroll velocity becomes a vertical kick that settles back to calm
+    const scrollDv = window.scrollY - lastScrollY;
+    lastScrollY = window.scrollY;
+    const kick = Math.max(-1.4, Math.min(1.4, scrollDv * 0.012));
+
+    // cursor repulsion: particles near the pointer ray ease away from it
+    raycaster.setFromCamera(ndc, camera);
+    const ray = raycaster.ray;
+
     for (let i = 0; i < COUNT; i++) {
+      const k = i * 3;
+      pt.set(pos[k], pos[k + 1], pos[k + 2]);
+      const d = ray.distanceToPoint(pt);
+      if (d < REPULSE_RADIUS) {
+        ray.closestPointToPoint(pt, closest);
+        push.subVectors(pt, closest);
+        if (push.lengthSq() > 1e-6) {
+          const f = Math.pow(1 - d / REPULSE_RADIUS, 2) * REPULSE_STRENGTH;
+          push.normalize().multiplyScalar(f);
+          disp[k] += push.x;
+          disp[k + 1] += push.y;
+          disp[k + 2] += push.z;
+        }
+      }
+      disp[k + 1] += kick * 0.018;
+
       for (let a = 0; a < 3; a++) {
-        const k = i * 3 + a;
-        pos[k] += vel[k] * frameMs;
+        const j = k + a;
+        pos[j] += vel[j] * frameMs + disp[j];
+        disp[j] *= 0.9; // settle back to the ambient drift
         const bound = a === 0 ? BOUNDS.x : a === 1 ? BOUNDS.y : BOUNDS.z;
-        if (pos[k] > bound) pos[k] = -bound;
-        if (pos[k] < -bound) pos[k] = bound;
+        if (pos[j] > bound) pos[j] = -bound;
+        if (pos[j] < -bound) pos[j] = bound;
       }
     }
     geo.attributes.position.needsUpdate = true;
