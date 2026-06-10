@@ -1,5 +1,20 @@
 /* Scroll-driven particle hero (v3) — see hero3d.js. Desktop + JS + WebGL only. */
 
+/* The slot is empty static markup, zero-height by default (no-JS, mobile,
+   reduced motion). The inline gate in <head> reserves its space before first
+   paint on capable desktops, so hero injection causes no layout shift. */
+.hero3d-slot {
+  height: 0;
+}
+
+html.hero3d-on .hero3d-slot {
+  height: 520vh; /* keep in sync with CONFIG.bandVh in hero3d.js */
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  background: #12130e;
+}
+
 .hero3d {
   position: relative;
   width: 100vw;

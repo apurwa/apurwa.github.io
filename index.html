@@ -24,6 +24,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css?v=20260529-5" />
   <link rel="stylesheet" href="hero3d.css?v=1" />
+  <script>
+    // Reserve the 3D hero's space before first paint so its injection never
+    // shifts the layout. hero3d.js removes the class if WebGL setup fails.
+    try {
+      if (matchMedia("(min-width: 900px) and (pointer: fine)").matches &&
+          !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("hero3d-on");
+      }
+    } catch (e) {}
+  </script>
   <script type="importmap">
   { "imports": {
       "three": "./vendor/three/three.module.min.js",
@@ -69,6 +79,7 @@
     <a class="header-name" href="#top">Apurwa Sarwajit</a>
   </header>
   <main>
+    <div class="hero3d-slot" aria-hidden="true"></div>
     <section class="landing" id="top" aria-label="Overview">
       <div class="landing-left">
         <figure class="profile-portrait" aria-label="Portrait of Apurwa Sarwajit">

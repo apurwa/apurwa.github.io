@@ -25,6 +25,12 @@ const desktop = window.matchMedia("(min-width: 900px) and (pointer: fine)").matc
 // and small windows never download a byte of it.
 if (desktop && !reducedMotion) boot();
 
+// Collapses the pre-reserved slot if anything fails, so a broken WebGL
+// environment never leaves a giant empty dark band.
+function abortHero() {
+  document.documentElement.classList.remove("hero3d-on");
+}
+
 async function boot() {
   let THREE, EffectComposer, RenderPass, UnrealBloomPass;
   try {
@@ -39,6 +45,7 @@ async function boot() {
     RenderPass = rp.RenderPass;
     UnrealBloomPass = ub.UnrealBloomPass;
   } catch (err) {
+    abortHero();
     return; // module fetch failed -> site stays as-is
   }
   init(THREE, EffectComposer, RenderPass, UnrealBloomPass);
@@ -50,18 +57,18 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
     renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.dprMax));
   } catch (err) {
+    abortHero();
     return;
   }
 
-  // ---- band + sticky stage + captions ----
-  const main = document.querySelector("main");
+  // ---- fill the pre-reserved slot (space was held since first paint) ----
   const landing = document.querySelector(".landing");
-  if (!main || !landing) return;
-
-  const band = document.createElement("section");
-  band.className = "hero3d";
-  band.style.height = CONFIG.bandVh + "vh";
-  band.setAttribute("aria-hidden", "true");
+  const band = document.querySelector(".hero3d-slot");
+  if (!band || !landing) {
+    abortHero();
+    return;
+  }
+  band.classList.add("hero3d");
   band.innerHTML =
     '<div class="hero3d-sticky">' +
     '<div class="hero3d-vignette"></div>' +
@@ -70,7 +77,6 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
     '<div class="hero3d-fade"></div>' +
     '<p class="hero3d-cue">scroll</p>' +
     "</div>";
-  main.insertBefore(band, landing);
   const sticky = band.querySelector(".hero3d-sticky");
   const fade = band.querySelector(".hero3d-fade");
   const cue = band.querySelector(".hero3d-cue");
