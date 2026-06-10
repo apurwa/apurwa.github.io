@@ -12,6 +12,7 @@ html.hero3d-on .hero3d-slot {
   position: relative;
   width: 100vw;
   margin-left: calc(50% - 50vw);
+  margin-top: -4rem; /* cancel main's top padding: hero starts at pixel 0 */
   background: #12130e;
 }
 

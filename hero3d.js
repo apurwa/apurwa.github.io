@@ -166,13 +166,15 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
   cx.fillText("SARWAJIT", 320, 224);
   const img = cx.getImageData(0, 0, cv.width, cv.height).data;
   const namePts = [];
-  for (let y = 0; y < cv.height; y += 2) {
-    for (let x = 0; x < cv.width; x += 2) {
-      if (img[(y * cv.width + x) * 4] > 128) {
+  // sparse sampling + depth so the letters read as an airy dot-matrix
+  // glow rather than a solid mass
+  for (let y = 0; y < cv.height; y += 3) {
+    for (let x = 0; x < cv.width; x += 3) {
+      if (img[(y * cv.width + x) * 4] > 128 && Math.random() < 0.72) {
         namePts.push(
-          (x - cv.width / 2) * 0.030,
-          -(y - cv.height / 2) * 0.030,
-          (Math.random() - 0.5) * 0.35
+          (x - cv.width / 2) * 0.030 + (Math.random() - 0.5) * 0.05,
+          -(y - cv.height / 2) * 0.030 + (Math.random() - 0.5) * 0.05,
+          (Math.random() - 0.5) * 0.9
         );
       }
     }
@@ -275,8 +277,12 @@ function init(THREE, EffectComposer, RenderPass, UnrealBloomPass) {
   const colors = new Float32Array(COUNT * 3);
   const cream = new THREE.Color("#d9d2bb");
   const red = new THREE.Color("#a9504a");
+  const tint = new THREE.Color();
   for (let i = 0; i < COUNT; i++) {
-    (Math.random() < 0.05 ? red : cream).toArray(colors, i * 3);
+    // per-particle brightness variation keeps the field from looking flat
+    tint.copy(Math.random() < 0.05 ? red : cream)
+      .multiplyScalar(0.6 + Math.random() * 0.5);
+    tint.toArray(colors, i * 3);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
