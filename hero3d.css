@@ -1,4 +1,4 @@
-/* Scroll-driven 3D hero band — see hero3d.js. Injected only on desktop with JS+WebGL. */
+/* Scroll-driven particle hero (v3) — see hero3d.js. Desktop + JS + WebGL only. */
 
 .hero3d {
   position: relative;
@@ -12,7 +12,7 @@
   height: 100vh;
   height: 100svh;
   overflow: hidden;
-  background: #1a1c16;
+  background: #12130e;
 }
 
 .hero3d-sticky canvas {
@@ -23,13 +23,90 @@
   display: block;
 }
 
+/* cinematic edges */
+.hero3d-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    transparent 52%, rgba(8, 9, 6, 0.55) 100%);
+}
+
+.hero3d-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* captions: crisp DOM type synced to scroll */
+.hero3d-captions {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hero3d-caption {
+  position: absolute;
+  max-width: 420px;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.hero3d-caption.is-left {
+  left: clamp(40px, 9vw, 140px);
+  top: 50%;
+}
+
+.hero3d-caption.is-right {
+  right: clamp(40px, 9vw, 140px);
+  top: 50%;
+  text-align: right;
+}
+
+.hero3d-caption.is-center,
+.hero3d-caption.is-center-low {
+  left: 50%;
+  margin-left: -210px;
+  width: 420px;
+  text-align: center;
+}
+
+.hero3d-caption.is-center { top: 42%; }
+.hero3d-caption.is-center-low { top: 68%; }
+
+.hero3d-kicker {
+  margin: 0 0 10px;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  color: #ff6a5e;
+}
+
+.hero3d-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  line-height: 1.2;
+  color: #f7efcf;
+}
+
+.hero3d-body {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: rgba(247, 239, 207, 0.72);
+}
+
 .hero3d-fade {
   position: absolute;
   inset: 0;
+  z-index: 3;
   background: var(--bg);
   opacity: 0;
   pointer-events: none;
-  z-index: 2;
 }
 
 .hero3d-cue {
@@ -38,7 +115,7 @@
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
-  z-index: 3;
+  z-index: 4;
   font-size: 0.72rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;

@@ -1,18 +1,25 @@
-// Scroll-driven 3D hero: the visitor's scroll flies a camera through a dark
-// world of floating career stations (title -> products -> say hello), then
-// hands off to the regular site. Inertia-smoothed scrub + mouse parallax.
+// Scroll-driven particle hero, v3 (polish pass).
 //
-// Injected entirely from JS: no-JS visitors, mobile, reduced-motion, and
-// WebGL-less browsers see the site unchanged.
+// One luminous particle field morphs through formations as the visitor
+// scrolls: name -> agent network -> risk surface -> orbital system -> rises
+// away into the cream site. Bloom post-processing, soft additive sprites,
+// choreographed camera beats, crisp DOM captions synced to scroll.
+//
+// Injected entirely from JS: no-JS, mobile, reduced-motion, and WebGL-less
+// visitors see the site unchanged.
 
 import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 
 const CONFIG = {
-  bandVh: 420,          // total scroll length of the band, in vh
-  scrub: 0.075,         // camera inertia (lerp factor per frame)
-  parallax: 0.45,       // mouse parallax amplitude
-  stationGap: 14,       // z distance between stations
-  dprMax: 1.75,
+  bandVh: 520,        // scroll length (5 beats)
+  scrub: 0.07,        // scroll inertia
+  parallax: 0.5,
+  dprMax: 1.5,        // bloom is per-pixel; keep DPR modest
+  bloom: { strength: 1.05, radius: 0.75, threshold: 0.08 },
+  pointSize: 0.17,
 };
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -22,13 +29,13 @@ if (desktop && !reducedMotion) init();
 function init() {
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.dprMax));
   } catch (err) {
     return;
   }
 
-  // ---- band + sticky stage injection ----
+  // ---- band + sticky stage + captions ----
   const main = document.querySelector("main");
   const landing = document.querySelector(".landing");
   if (!main || !landing) return;
@@ -39,6 +46,9 @@ function init() {
   band.setAttribute("aria-hidden", "true");
   band.innerHTML =
     '<div class="hero3d-sticky">' +
+    '<div class="hero3d-vignette"></div>' +
+    '<div class="hero3d-grain"></div>' +
+    '<div class="hero3d-captions"></div>' +
     '<div class="hero3d-fade"></div>' +
     '<p class="hero3d-cue">scroll</p>' +
     "</div>";
@@ -46,146 +56,251 @@ function init() {
   const sticky = band.querySelector(".hero3d-sticky");
   const fade = band.querySelector(".hero3d-fade");
   const cue = band.querySelector(".hero3d-cue");
-  sticky.insertBefore(renderer.domElement, fade);
+  const captionWrap = band.querySelector(".hero3d-captions");
+  sticky.insertBefore(renderer.domElement, sticky.firstChild);
+
+  const CAPTIONS = [
+    { kicker: "", title: "", body: "AI Product Lead — browser agents", pos: "center-low" },
+    { kicker: "01 / AI STUDIO", title: "Browser agents in production",
+      body: "Enterprise security teams automate legacy workflows without APIs. $1M contracted in year one.", pos: "left" },
+    { kicker: "02 / FRAUD SCORE", title: "Risk, scored before onboarding",
+      body: "India's first pre-onboarding fraud score. $4M ARR in 24 months across the top 6 banks.", pos: "right" },
+    { kicker: "03 / SCORE ENGINE", title: "Decisions at platform scale",
+      body: "A configurable decisioning core behind 50M+ transactions every month.", pos: "left" },
+    { kicker: "", title: "Say hello", body: "The full story is below ↓", pos: "center" },
+  ];
+  const captionEls = CAPTIONS.map((c) => {
+    const el = document.createElement("div");
+    el.className = "hero3d-caption is-" + c.pos;
+    el.innerHTML =
+      (c.kicker ? '<p class="hero3d-kicker">' + c.kicker + "</p>" : "") +
+      (c.title ? '<h2 class="hero3d-title">' + c.title + "</h2>" : "") +
+      '<p class="hero3d-body">' + c.body + "</p>";
+    captionWrap.appendChild(el);
+    return el;
+  });
 
   const W = () => sticky.clientWidth;
   const H = () => sticky.clientHeight;
   renderer.setSize(W(), H());
 
-  // ---- scene & atmosphere ----
-  const INK = 0x1a1c16;
+  // ---- scene, camera, post ----
+  const INK = 0x12130e;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(INK);
-  scene.fog = new THREE.Fog(INK, 8, 46);
+  scene.fog = new THREE.FogExp2(INK, 0.028);
 
-  const camera = new THREE.PerspectiveCamera(58, W() / H(), 0.1, 120);
+  const camera = new THREE.PerspectiveCamera(55, W() / H(), 0.1, 120);
 
-  scene.add(new THREE.AmbientLight(0xfff6dd, 0.55));
-  const key = new THREE.DirectionalLight(0xfff6dd, 1.6);
-  key.position.set(5, 9, 6);
-  scene.add(key);
-  const rim = new THREE.DirectionalLight(0x9d0006, 0.7);
-  rim.position.set(-6, -3, -4);
-  scene.add(rim);
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new UnrealBloomPass(
+    new THREE.Vector2(W(), H()),
+    CONFIG.bloom.strength, CONFIG.bloom.radius, CONFIG.bloom.threshold
+  ));
+  composer.setSize(W(), H());
 
-  // ---- station builder: cream panel, ink text, red frame ----
-  function makeLabelTexture(title, sub, big) {
+  // ---- soft round sprite for particles ----
+  function makeSprite() {
     const cv = document.createElement("canvas");
-    cv.width = 1024;
-    cv.height = 512;
+    cv.width = cv.height = 64;
     const cx = cv.getContext("2d");
-    cx.fillStyle = "#f7efcf";
-    cx.fillRect(0, 0, 1024, 512);
-    cx.fillStyle = "#9d0006";
-    cx.fillRect(64, 96, 88, 14);
-    cx.fillStyle = "#1f211b";
-    cx.textBaseline = "top";
-    cx.font = "bold " + (big ? 104 : 92) + "px Menlo, monospace";
-    cx.fillText(title, 64, 160, 896);
-    cx.fillStyle = "#6f653b";
-    cx.font = "44px Menlo, monospace";
-    const words = sub.split(" ");
-    let line = "";
-    let y = big ? 320 : 300;
-    words.forEach((w) => {
-      if (cx.measureText(line + w).width > 880) {
-        cx.fillText(line, 64, y);
-        y += 62;
-        line = "";
-      }
-      line += w + " ";
-    });
-    cx.fillText(line, 64, y);
+    const g = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(0.35, "rgba(255,255,255,0.65)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    cx.fillStyle = g;
+    cx.fillRect(0, 0, 64, 64);
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
     return tex;
   }
 
-  function makeStation(title, sub, pos, yRot, big) {
-    const group = new THREE.Group();
-    const panel = new THREE.Mesh(
-      new THREE.BoxGeometry(7.2, 3.6, 0.16),
-      new THREE.MeshStandardMaterial({
-        map: makeLabelTexture(title, sub, big),
-        roughness: 0.62,
-      })
-    );
-    group.add(panel);
-    const frame = new THREE.Mesh(
-      new THREE.BoxGeometry(7.5, 3.9, 0.08),
-      new THREE.MeshStandardMaterial({ color: 0x9d0006, roughness: 0.45 })
-    );
-    frame.position.z = -0.09;
-    group.add(frame);
-    group.position.copy(pos);
-    group.rotation.y = yRot;
-    scene.add(group);
-    return group;
+  // ---- formation 0: the name, sampled from canvas ----
+  const cv = document.createElement("canvas");
+  cv.width = 640;
+  cv.height = 280;
+  const cx = cv.getContext("2d");
+  cx.fillStyle = "#fff";
+  cx.font = "bold 96px Menlo, monospace";
+  cx.textAlign = "center";
+  cx.fillText("APURWA", 320, 108);
+  cx.fillText("SARWAJIT", 320, 224);
+  const img = cx.getImageData(0, 0, cv.width, cv.height).data;
+  const namePts = [];
+  for (let y = 0; y < cv.height; y += 2) {
+    for (let x = 0; x < cv.width; x += 2) {
+      if (img[(y * cv.width + x) * 4] > 128) {
+        namePts.push(
+          (x - cv.width / 2) * 0.030,
+          -(y - cv.height / 2) * 0.030,
+          (Math.random() - 0.5) * 0.35
+        );
+      }
+    }
+  }
+  const COUNT = namePts.length / 3;
+  const fName = new Float32Array(namePts);
+
+  // ---- formation 1: agent network (clusters + edges + pulse path) ----
+  const NODES = 26;
+  const nodes = [];
+  for (let i = 0; i < NODES; i++) {
+    const L = i % 5;
+    nodes.push(new THREE.Vector3(
+      (L - 2) * 4.4 + (Math.random() - 0.5) * 1.2,
+      ((i / 5 | 0) - 2.1) * 2.2 + (Math.random() - 0.5) * 1.2,
+      (Math.random() - 0.5) * 3.5
+    ));
+  }
+  const fNetwork = new Float32Array(COUNT * 3);
+  for (let i = 0; i < COUNT; i++) {
+    const n = nodes[i % NODES];
+    fNetwork[i * 3] = n.x + (Math.random() - 0.5) * 0.7;
+    fNetwork[i * 3 + 1] = n.y + (Math.random() - 0.5) * 0.7;
+    fNetwork[i * 3 + 2] = n.z + (Math.random() - 0.5) * 0.7;
+  }
+  const edgePairs = [];
+  for (let i = 0; i < NODES; i++) {
+    for (let k = 0; k < 2; k++) {
+      const j = Math.floor(Math.random() * NODES);
+      if (j !== i) edgePairs.push(i, j);
+    }
   }
 
-  const GAP = CONFIG.stationGap;
-  const stations = [
-    makeStation("APURWA SARWAJIT", "AI Product Lead — browser agents for enterprises",
-      new THREE.Vector3(0, 0.2, -2), 0, true),
-    makeStation("AI STUDIO", "Production browser agents — $1M contracted in year one",
-      new THREE.Vector3(-3.8, 0.6, -2 - GAP), 0.42, false),
-    makeStation("FRAUD SCORE", "$4M ARR in 24 months — India's top 6 banks",
-      new THREE.Vector3(3.8, -0.4, -2 - GAP * 2), -0.42, false),
-    makeStation("SCORE ENGINE", "50M+ transactions a month across 35+ clients",
-      new THREE.Vector3(-3.8, 0.4, -2 - GAP * 3), 0.42, false),
-    makeStation("SAY HELLO", "apurvsingh28@gmail.com — the full story is below",
-      new THREE.Vector3(0, 0.1, -2 - GAP * 4), 0, true),
-  ];
+  // ---- formation 2: risk surface (flowing wave grid) ----
+  const fWave = new Float32Array(COUNT * 3);
+  {
+    const cols = Math.ceil(Math.sqrt(COUNT * 2.2));
+    const rows = Math.ceil(COUNT / cols);
+    for (let i = 0; i < COUNT; i++) {
+      const gx = (i % cols) / (cols - 1) - 0.5;
+      const gz = ((i / cols) | 0) / (rows - 1) - 0.5;
+      const x = gx * 22;
+      const z = gz * 10;
+      fWave[i * 3] = x;
+      fWave[i * 3 + 1] = Math.sin(x * 0.55) * 1.1 + Math.cos(z * 0.9 + x * 0.3) * 0.8 - 0.6;
+      fWave[i * 3 + 2] = z;
+    }
+  }
 
-  // ---- floating dust for depth ----
-  const DUST = 700;
+  // ---- formation 3: orbital system ----
+  const fOrbit = new Float32Array(COUNT * 3);
+  {
+    const v = new THREE.Vector3();
+    const axis = new THREE.Vector3(1, 0.4, 0).normalize();
+    for (let i = 0; i < COUNT; i++) {
+      if (i % 9 === 0) {
+        // dense core
+        const r = Math.random() * 1.3;
+        const t = Math.random() * Math.PI * 2;
+        const p = Math.acos(2 * Math.random() - 1);
+        v.set(r * Math.sin(p) * Math.cos(t), r * Math.sin(p) * Math.sin(t), r * Math.cos(p));
+      } else {
+        const ring = 2.6 + (i % 5) * 1.15;
+        const t = Math.random() * Math.PI * 2;
+        v.set(Math.cos(t) * ring, (Math.random() - 0.5) * 0.18, Math.sin(t) * ring);
+        v.applyAxisAngle(axis, (i % 5) * 0.22);
+      }
+      v.toArray(fOrbit, i * 3);
+    }
+  }
+
+  // ---- formation 4: dispersal (rises and spreads) ----
+  const fGone = new Float32Array(COUNT * 3);
+  for (let i = 0; i < COUNT; i++) {
+    fGone[i * 3] = (Math.random() - 0.5) * 40;
+    fGone[i * 3 + 1] = 6 + Math.random() * 18;
+    fGone[i * 3 + 2] = (Math.random() - 0.5) * 30;
+  }
+
+  const formations = [fName, fNetwork, fWave, fOrbit, fGone];
+  const SEGS = formations.length - 1;
+
+  // ---- particles ----
+  const positions = new Float32Array(fName);
+  const colors = new Float32Array(COUNT * 3);
+  const cream = new THREE.Color("#ffe9b8");
+  const red = new THREE.Color("#ff4040");
+  for (let i = 0; i < COUNT; i++) {
+    (Math.random() < 0.1 ? red : cream).toArray(colors, i * 3);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  const points = new THREE.Points(geo, new THREE.PointsMaterial({
+    size: CONFIG.pointSize,
+    map: makeSprite(),
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.95,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  }));
+  scene.add(points);
+
+  // ---- network edges + agent pulse (visible only around beat 1) ----
+  const edgePos = new Float32Array(edgePairs.length * 3);
+  edgePairs.forEach((n, k) => { nodes[n].toArray(edgePos, k * 3); });
+  const edgeGeo = new THREE.BufferGeometry();
+  edgeGeo.setAttribute("position", new THREE.BufferAttribute(edgePos, 3));
+  const edgeMat = new THREE.LineBasicMaterial({
+    color: 0xffd9a0,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  scene.add(new THREE.LineSegments(edgeGeo, edgeMat));
+
+  const pulse = new THREE.Mesh(
+    new THREE.SphereGeometry(0.16, 12, 12),
+    new THREE.MeshBasicMaterial({ color: 0xff5a5a, transparent: true, opacity: 0 })
+  );
+  scene.add(pulse);
+  const pulsePath = [3, 8, 12, 17, 23].map((i) => nodes[i % NODES]);
+
+  // ---- ambient drift dust ----
+  const DUST = 300;
   const dustPos = new Float32Array(DUST * 3);
   for (let i = 0; i < DUST; i++) {
-    dustPos[i * 3] = (Math.random() - 0.5) * 44;
-    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 20;
-    dustPos[i * 3 + 2] = 6 - Math.random() * (GAP * 4 + 24);
+    dustPos[i * 3] = (Math.random() - 0.5) * 50;
+    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 26;
+    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 40;
   }
   const dustGeo = new THREE.BufferGeometry();
   dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
   const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
-    color: 0xd7c783,
-    size: 0.06,
+    size: 0.05,
+    map: makeSprite(),
+    color: 0x8a7d4a,
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.35,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   }));
   scene.add(dust);
 
-  // red guide line running through the world (the "path")
-  const guidePts = [];
-  for (let i = 0; i <= 60; i++) {
-    const z = 4 - (i / 60) * (GAP * 4 + 14);
-    guidePts.push(new THREE.Vector3(Math.sin(i * 0.45) * 0.5, -2.6 + Math.sin(i * 0.3) * 0.2, z));
-  }
-  scene.add(new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints(guidePts),
-    new THREE.LineBasicMaterial({ color: 0x9d0006, transparent: true, opacity: 0.5 })
-  ));
+  // ---- camera beats: one keyframe per formation ----
+  const camBeats = [
+    { pos: new THREE.Vector3(0, 0, 14), look: new THREE.Vector3(0, 0, 0) },
+    { pos: new THREE.Vector3(-4.5, 1.6, 13), look: new THREE.Vector3(0.5, 0, 0) },
+    { pos: new THREE.Vector3(0, 5.2, 13), look: new THREE.Vector3(0, -1.2, 0) },
+    { pos: new THREE.Vector3(5.5, 2.4, 10), look: new THREE.Vector3(0, 0, 0) },
+    { pos: new THREE.Vector3(0, -1.5, 17), look: new THREE.Vector3(0, 5, 0) },
+  ];
 
-  // ---- camera path: weaves past each station ----
-  const pathPts = [new THREE.Vector3(0, 0.3, 7)];
-  stations.forEach((s, i) => {
-    pathPts.push(new THREE.Vector3(s.position.x * 0.32, s.position.y * 0.4 + 0.2, s.position.z + 5.6));
-  });
-  pathPts.push(new THREE.Vector3(0, 0.3, stations[stations.length - 1].position.z - 6));
-  const path = new THREE.CatmullRomCurve3(pathPts, false, "catmullrom", 0.6);
-
-  // ---- scroll + mouse state ----
-  let progress = 0;       // smoothed
-  let targetProgress = 0; // raw from scroll
+  // ---- scroll + pointer ----
+  let progress = 0;
+  let target = 0;
   let mx = 0, my = 0, smx = 0, smy = 0;
   let scrolled = false;
 
   function readScroll() {
     const rect = band.getBoundingClientRect();
     const total = rect.height - sticky.clientHeight;
-    targetProgress = total > 0 ? Math.max(0, Math.min(1, -rect.top / total)) : 0;
-    if (targetProgress > 0.01 && !scrolled) {
+    target = total > 0 ? Math.max(0, Math.min(1, -rect.top / total)) : 0;
+    if (target > 0.01 && !scrolled) {
       scrolled = true;
       cue.classList.add("is-hidden");
     }
@@ -200,11 +315,12 @@ function init() {
 
   window.addEventListener("resize", () => {
     renderer.setSize(W(), H());
+    composer.setSize(W(), H());
     camera.aspect = W() / H();
     camera.updateProjectionMatrix();
   });
 
-  // ---- render loop: pauses offscreen / hidden tab ----
+  // ---- visibility pause ----
   let visible = true;
   let pageVisible = !document.hidden;
   if ("IntersectionObserver" in window) {
@@ -216,38 +332,79 @@ function init() {
     pageVisible = !document.hidden;
   });
 
+  const smooth = (x) => x * x * (3 - 2 * x);
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+  // weight peaking at beat i (1 at the beat, 0 a full beat away)
+  const beatWeight = (p, i) => clamp01(1 - Math.abs(p * SEGS - i));
+
   const camPos = new THREE.Vector3();
-  const lookAt = new THREE.Vector3();
+  const camLook = new THREE.Vector3();
 
   function frame(now) {
     requestAnimationFrame(frame);
     if (!visible || !pageVisible) return;
 
-    progress += (targetProgress - progress) * CONFIG.scrub;
-    smx += (mx - smx) * 0.06;
-    smy += (my - smy) * 0.06;
+    progress += (target - progress) * CONFIG.scrub;
+    smx += (mx - smx) * 0.05;
+    smy += (my - smy) * 0.05;
+    const p = clamp01(progress);
 
-    const p = Math.max(0, Math.min(1, progress));
-    path.getPointAt(p, camPos);
+    // formation morph
+    const segF = Math.min(p * SEGS, SEGS - 1e-6);
+    const seg = segF | 0;
+    const local = smooth(segF - seg);
+    const A = formations[seg];
+    const B = formations[seg + 1];
+    const wobble = Math.sin(now * 0.0011) * 0.018;
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i] = A[i] + (B[i] - A[i]) * local + Math.sin(now * 0.001 + i) * wobble;
+      positions[i + 1] = A[i + 1] + (B[i + 1] - A[i + 1]) * local + Math.cos(now * 0.0013 + i) * wobble;
+      positions[i + 2] = A[i + 2] + (B[i + 2] - A[i + 2]) * local;
+    }
+    geo.attributes.position.needsUpdate = true;
+
+    // beat-scoped extras
+    const wNet = beatWeight(p, 1);
+    edgeMat.opacity = smooth(wNet) * 0.32;
+    if (wNet > 0.4) {
+      const t = (now * 0.00035) % 1;
+      const segs = pulsePath.length - 1;
+      const si = Math.min(t * segs | 0, segs - 1);
+      pulse.position.lerpVectors(pulsePath[si], pulsePath[si + 1], (t * segs) - si);
+      pulse.material.opacity = smooth((wNet - 0.4) / 0.6);
+      pulse.scale.setScalar(1 + Math.sin(now * 0.01) * 0.3);
+    } else {
+      pulse.material.opacity = 0;
+    }
+
+    // orbital beat: slow rotation of the whole field
+    points.rotation.y = beatWeight(p, 3) * now * 0.00012;
+
+    // camera: lerp between beat keyframes + parallax
+    const ca = camBeats[seg];
+    const cb = camBeats[seg + 1];
+    camPos.lerpVectors(ca.pos, cb.pos, local);
+    camLook.lerpVectors(ca.look, cb.look, local);
     camPos.x += smx * CONFIG.parallax;
     camPos.y += -smy * CONFIG.parallax * 0.6;
     camera.position.copy(camPos);
-    path.getPointAt(Math.min(p + 0.05, 1), lookAt);
-    lookAt.x += smx * CONFIG.parallax * 1.6;
-    lookAt.y += -smy * CONFIG.parallax;
-    camera.lookAt(lookAt);
+    camera.lookAt(camLook);
 
-    stations.forEach((s, i) => {
-      s.position.y += Math.sin(now * 0.001 + i * 1.9) * 0.0012;
-      s.rotation.z = Math.sin(now * 0.0006 + i) * 0.02;
+    dust.rotation.y = now * 0.00002;
+
+    // captions
+    captionEls.forEach((el, i) => {
+      const w = beatWeight(p, i);
+      const o = clamp01((w - 0.55) / 0.45);
+      el.style.opacity = smooth(o).toFixed(3);
+      el.style.transform = "translateY(" + ((1 - smooth(o)) * 18).toFixed(1) + "px)";
     });
-    dust.rotation.z = now * 0.00001;
 
-    // hand off to the cream site near the end of the band
-    const f = Math.max(0, (p - 0.86) / 0.14);
+    // handoff to cream site
+    const f = clamp01((p - 0.9) / 0.1);
     fade.style.opacity = (f * f).toFixed(3);
 
-    renderer.render(scene, camera);
+    composer.render();
   }
   requestAnimationFrame(frame);
 }
