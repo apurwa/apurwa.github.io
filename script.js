@@ -192,3 +192,23 @@ if (cursorDot && cursorRing) {
     renderCursor();
   }
 }
+
+// Email icons copy the address to the clipboard rather than relying on a
+// mailto handler (which silently does nothing on machines with no default
+// mail app). A brief "Copied!" toast confirms; mailto is the fallback if the
+// clipboard API is unavailable (e.g. non-secure context).
+document.querySelectorAll(".email-copy").forEach((link) => {
+  let copiedTimer;
+  link.addEventListener("click", (event) => {
+    const email = link.dataset.email;
+    if (!email || !navigator.clipboard) return; // let the mailto href run
+    event.preventDefault();
+    navigator.clipboard.writeText(email).then(() => {
+      link.classList.add("is-copied");
+      window.clearTimeout(copiedTimer);
+      copiedTimer = window.setTimeout(() => link.classList.remove("is-copied"), 1400);
+    }).catch(() => {
+      window.location.href = link.href; // clipboard blocked -> fall back to mailto
+    });
+  });
+});

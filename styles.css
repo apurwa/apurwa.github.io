@@ -286,6 +286,169 @@ a:hover {
   color: var(--hover);
 }
 
+/* Contact actions: quick icon links + prominent resume / github buttons */
+.contact-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-width: 22rem;
+}
+
+.contact-quick {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.15rem;
+}
+
+/* bare (unboxed) icons for the quick row */
+.icon-link {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+  color: var(--muted);
+  transition: color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+/* "Copied!" confirmation shown when the email address is copied */
+.copied-toast {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.icon-link.is-copied .copied-toast {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* footer contact row keeps the section's rhythm */
+.contact-quick--footer {
+  margin-top: 1.2rem;
+  margin-bottom: 0;
+}
+
+.icon-link svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  display: block;
+}
+
+.icon-link:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  transform: translateY(-1px);
+}
+
+/* wide labelled buttons: resume (primary) + github */
+.action-btn {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.68rem 0.9rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg) 55%, #fff);
+  transition: color 0.16s ease, border-color 0.16s ease,
+    background-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.action-btn .action-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.action-btn .action-label {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.78rem;
+}
+
+.action-btn .action-arrow {
+  width: 0.8rem;
+  height: 0.8rem;
+  opacity: 0.7;
+  transition: transform 0.16s ease, opacity 0.16s ease;
+}
+
+.action-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(97, 82, 22, 0.1);
+}
+
+.action-btn:hover .action-arrow {
+  opacity: 1;
+  transform: translate(2px, -2px);
+}
+
+/* resume carries a touch more weight as the primary action */
+.action-btn.is-primary {
+  color: var(--fg);
+  border-color: var(--muted);
+}
+
+.action-btn.is-primary .action-label {
+  font-weight: 600;
+}
+
+/* resume: open button + dedicated download square */
+.resume-group {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.resume-group .action-btn {
+  flex: 1;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.9rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg) 55%, #fff);
+  transition: color 0.16s ease, border-color 0.16s ease,
+    background-color 0.16s ease, transform 0.16s ease;
+}
+
+.icon-btn svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+  transition: transform 0.16s ease;
+}
+
+.icon-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.icon-btn.is-download:hover svg {
+  transform: translateY(2px);
+}
+
 .landing-right {
   display: flex;
   flex-direction: column;
