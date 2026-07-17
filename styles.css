@@ -139,6 +139,8 @@ body::after {
   content: "_";
   font-weight: 500;
   margin-left: 0.15em;
+  /* secondary accent when a theme defines --accent2; unchanged otherwise */
+  color: var(--accent2, currentColor);
 }
 
 body.is-name-docked .landing-left h1 {
@@ -409,6 +411,12 @@ a:hover {
   font-weight: 600;
 }
 
+/* résumé CTA icon + arrow pick up the secondary accent when set */
+.action-btn.is-primary .action-icon,
+.action-btn.is-primary .action-arrow {
+  color: var(--accent2, currentColor);
+}
+
 /* resume: open button + dedicated download square */
 .resume-group {
   display: flex;
@@ -484,7 +492,7 @@ a:hover {
 }
 
 .link-list a::after {
-  color: var(--muted);
+  color: var(--accent2, var(--muted));
   content: "↗";
   font-size: 0.875rem;
   margin-left: 0.25rem;
