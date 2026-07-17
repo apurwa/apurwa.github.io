@@ -310,6 +310,7 @@ a:hover {
   place-items: center;
   width: 2rem;
   height: 2rem;
+  border: none; /* cancel the global dotted link underline */
   border-radius: 6px;
   color: var(--muted);
   transition: color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
