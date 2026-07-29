@@ -54,10 +54,11 @@ function init(THREE) {
     pos[i * 3] = (Math.random() - 0.5) * BOUNDS.x * 2;
     pos[i * 3 + 1] = (Math.random() - 0.5) * BOUNDS.y * 2;
     pos[i * 3 + 2] = (Math.random() - 0.5) * BOUNDS.z * 2;
-    // base ambient drift, slowed 40% so it doesn't distract while reading
-    vel[i * 3] = (Math.random() - 0.5) * 0.0021;
-    vel[i * 3 + 1] = (Math.random() - 0.5) * 0.00168;
-    vel[i * 3 + 2] = (Math.random() - 0.5) * 0.0009;
+    // base ambient drift, kept very slow (~40% of original) so it reads as
+    // a still backdrop, not motion that distracts while reading
+    vel[i * 3] = (Math.random() - 0.5) * 0.00147;
+    vel[i * 3 + 1] = (Math.random() - 0.5) * 0.00118;
+    vel[i * 3 + 2] = (Math.random() - 0.5) * 0.00063;
     (Math.random() < 0.07 ? ember : olive).toArray(col, i * 3);
   }
   const geo = new THREE.BufferGeometry();
@@ -68,7 +69,7 @@ function init(THREE) {
     map: sprite,
     vertexColors: true,
     transparent: true,
-    opacity: 0.32,
+    opacity: 0.24,
     depthWrite: false,
   }));
   scene.add(points);
@@ -120,7 +121,7 @@ function init(THREE) {
     // scroll velocity becomes a vertical kick that settles back to calm
     const scrollDv = window.scrollY - lastScrollY;
     lastScrollY = window.scrollY;
-    const kick = Math.max(-1.4, Math.min(1.4, scrollDv * 0.012));
+    const kick = Math.max(-0.8, Math.min(0.8, scrollDv * 0.006));
 
     // cursor repulsion: particles near the pointer ray ease away from it
     raycaster.setFromCamera(ndc, camera);
@@ -141,7 +142,7 @@ function init(THREE) {
           disp[k + 2] += push.z;
         }
       }
-      disp[k + 1] += kick * 0.018;
+      disp[k + 1] += kick * 0.01;
 
       for (let a = 0; a < 3; a++) {
         const j = k + a;
