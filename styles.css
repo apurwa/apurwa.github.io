@@ -139,6 +139,8 @@ body::after {
   content: "_";
   font-weight: 500;
   margin-left: 0.15em;
+  /* secondary accent when a theme defines --accent2; unchanged otherwise */
+  color: var(--accent2, currentColor);
 }
 
 body.is-name-docked .landing-left h1 {
@@ -286,6 +288,176 @@ a:hover {
   color: var(--hover);
 }
 
+/* Contact actions: quick icon links + prominent resume / github buttons */
+.contact-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-width: 22rem;
+}
+
+.contact-quick {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.15rem;
+}
+
+/* bare (unboxed) icons for the quick row */
+.icon-link {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: none; /* cancel the global dotted link underline */
+  border-radius: 6px;
+  color: var(--muted);
+  transition: color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+/* "Copied!" confirmation shown when the email address is copied */
+.copied-toast {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.icon-link.is-copied .copied-toast {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* footer contact row keeps the section's rhythm */
+.contact-quick--footer {
+  margin-top: 1.2rem;
+  margin-bottom: 0;
+}
+
+.icon-link svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  display: block;
+}
+
+.icon-link:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  transform: translateY(-1px);
+}
+
+/* wide labelled buttons: resume (primary) + github */
+.action-btn {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.68rem 0.9rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg) 55%, #fff);
+  transition: color 0.16s ease, border-color 0.16s ease,
+    background-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.action-btn .action-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.action-btn .action-label {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.78rem;
+}
+
+.action-btn .action-arrow {
+  width: 0.8rem;
+  height: 0.8rem;
+  opacity: 0.7;
+  transition: transform 0.16s ease, opacity 0.16s ease;
+}
+
+.action-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(97, 82, 22, 0.1);
+}
+
+.action-btn:hover .action-arrow {
+  opacity: 1;
+  transform: translate(2px, -2px);
+}
+
+/* resume carries a touch more weight as the primary action */
+.action-btn.is-primary {
+  color: var(--fg);
+  border-color: var(--muted);
+}
+
+.action-btn.is-primary .action-label {
+  font-weight: 600;
+}
+
+/* résumé CTA icon + arrow pick up the secondary accent when set */
+.action-btn.is-primary .action-icon,
+.action-btn.is-primary .action-arrow {
+  color: var(--accent2, currentColor);
+}
+
+/* resume: open button + dedicated download square */
+.resume-group {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.resume-group .action-btn {
+  flex: 1;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.9rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg) 55%, #fff);
+  transition: color 0.16s ease, border-color 0.16s ease,
+    background-color 0.16s ease, transform 0.16s ease;
+}
+
+.icon-btn svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+  transition: transform 0.16s ease;
+}
+
+.icon-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.icon-btn.is-download:hover svg {
+  transform: translateY(2px);
+}
+
 .landing-right {
   display: flex;
   flex-direction: column;
@@ -321,7 +493,7 @@ a:hover {
 }
 
 .link-list a::after {
-  color: var(--muted);
+  color: var(--accent2, var(--muted));
   content: "↗";
   font-size: 0.875rem;
   margin-left: 0.25rem;
@@ -737,6 +909,130 @@ a:hover {
   color: var(--fg);
 }
 
+/* Building (open-source / side projects) */
+.building {
+  margin-bottom: 3rem;
+}
+
+.building-intro {
+  margin: -0.5rem 0 1.5rem;
+  max-width: 46em;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.project-card {
+  background: rgba(241, 235, 217, 0.5);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 1.1rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.project-card::before {
+  background: linear-gradient(90deg, var(--accent), transparent);
+  content: "";
+  height: 1px;
+  left: 0;
+  right: 45%;
+  top: 0;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.project-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 18px 40px rgba(125, 106, 43, 0.1);
+  transform: translateY(-0.25rem);
+}
+
+.project-card:hover::before {
+  opacity: 1;
+}
+
+.project-card h3 {
+  color: var(--accent);
+  font-size: 0.9375rem;
+  margin: 0 0 0.6rem;
+  overflow-wrap: break-word;
+}
+
+.project-card h3 a {
+  color: inherit;
+  border-bottom: 0;
+}
+
+.project-card h3 a:hover {
+  color: var(--hover);
+}
+
+.project-card p {
+  font-size: 0.875rem;
+  margin: 0;
+  flex: 1;
+}
+
+.project-repo,
+.project-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(215, 199, 131, 0.72);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.project-repo {
+  border-bottom: 0;
+  transition: color 0.16s ease;
+}
+
+.project-repo svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+}
+
+.project-repo:hover {
+  color: var(--accent);
+}
+
+/* multi-link footer (e.g. GitHub + npm): divider sits on the wrapper */
+.project-links {
+  display: flex;
+  gap: 1.1rem;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(215, 199, 131, 0.72);
+}
+
+.project-links .project-repo {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.project-status::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--signal);
+  flex: 0 0 auto;
+}
+
 /* Thinking */
 .thinking {
   margin-bottom: 3rem;
@@ -1003,6 +1299,10 @@ body.has-custom-cursor.is-cursor-hovering .cursor-ring {
   .skill-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+
+  .project-grid {
+    grid-template-columns: 1fr;
   }
 
   .edu-row {

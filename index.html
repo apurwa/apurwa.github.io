@@ -22,7 +22,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260529-5" />
+  <link rel="stylesheet" href="styles.css?v=20260729-2" />
+  <script type="importmap">
+  { "imports": {
+      "three": "./vendor/three/three.module.min.js",
+      "three/addons/": "./vendor/three/addons/"
+  } }
+  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -69,27 +75,64 @@
         </figure>
         <h1>Apurwa Sarwajit</h1>
         <p class="proof">
-          I build 0 to 1 AI products for enterprises. Currently, I lead AI Studio at
-          Redblock.ai, where security teams manage and deploy browser agents to automate
-          complex workflows. Before that, I built India's first Fraud Score, which helps
-          banks identify money mules before onboarding and is now used by the country's top 6 banks.
+          Technical product manager. I build 0 to 1 AI products for enterprises and stay
+          close to the code, working in Python, SQL, and TypeScript and publishing
+          open-source packages on npm, including an MCP server. Currently I lead AI Studio
+          at Redblock.ai, where security teams build and deploy browser agents for the
+          legacy, non-API systems that APIs never reached, with eval harnesses gating
+          every release.
         </p>
         <p class="proof">
-          Most of my work has been in new categories, where the hard part is finding the
-          right problem, shaping the product, and turning it into something valuable.
-          AI Studio crossed $1M in contracted revenue in its first year, and Fraud Score
-          reached $4M ARR in 24 months.
+          I have spent most of my career in new categories, where the hard part is finding
+          the right problem, shaping the product, and proving it works before it scales.
+          AI Studio crossed $1M in contracted revenue in year one. Earlier I launched
+          India's first pre-onboarding Fraud Score, adopted by the top 6 banks and reaching
+          $4M ARR in 24 months, on a decisioning platform running 50M+ transactions a month.
         </p>
         <p class="proof">
-          In my free time, I like tinkering with Claude Code and Codex, building small things,
-          breaking them, fixing them, and learning how AI is changing the way software gets made.
+          Outside work I ship side projects end-to-end with Claude Code and Codex, building,
+          breaking, and fixing small things to understand how AI is changing the way
+          software gets made.
         </p>
-        <ul class="links" aria-label="Contact links">
-          <li><a href="Apurwa-Sarwajit-AI-Product-Lead-Resume.pdf">Resume</a></li>
-          <li><a href="https://www.linkedin.com/in/apurwa-sarwajit" rel="me">LinkedIn</a></li>
-          <li><a href="https://github.com/apurwa" rel="me">GitHub</a></li>
-          <li><a href="mailto:apurvsingh28@gmail.com">Email</a></li>
-        </ul>
+        <nav class="contact-actions" aria-label="Contact and links">
+          <div class="contact-quick">
+            <a class="icon-link email-copy" href="mailto:apurvsingh28@gmail.com" data-email="apurvsingh28@gmail.com" aria-label="Copy email address">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2"/>
+                <path d="m3.5 7.5 8.5 6 8.5-6"/>
+              </svg>
+              <span class="copied-toast" aria-hidden="true">Copied!</span>
+            </a>
+            <a class="icon-link" href="https://www.linkedin.com/in/apurwa-sarwajit" rel="me noopener" target="_blank" aria-label="LinkedIn (opens in new tab)">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.47-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.8 0 0 .78 0 1.73v20.53C0 23.22.8 24 1.77 24h20.45C23.2 24 24 23.22 24 22.27V1.73C24 .78 23.2 0 22.22 0z"/>
+              </svg>
+            </a>
+            <a class="icon-link" href="https://github.com/apurwa" rel="me noopener" target="_blank" aria-label="GitHub (opens in new tab)">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.82 1.1.82 2.22 0 1.61-.02 2.9-.02 3.29 0 .32.22.7.83.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/>
+              </svg>
+            </a>
+          </div>
+          <div class="resume-group">
+            <a class="action-btn is-primary" href="Apurwa-Sarwajit-Resume.pdf" target="_blank" rel="noopener" title="Open my resume (PDF)">
+              <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 3v5h5"/>
+                <path d="M9 13h6M9 17h6"/>
+              </svg>
+              <span class="action-label">My Resume</span>
+              <svg class="action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7 17 17 7"/><path d="M8 7h9v9"/>
+              </svg>
+            </a>
+            <a class="icon-btn is-download" href="Apurwa-Sarwajit-Resume.pdf" download aria-label="Download my resume (PDF)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/>
+              </svg>
+            </a>
+          </div>
+        </nav>
       </div>
       <div class="landing-right">
         <section class="landing-group" aria-labelledby="landing-work">
@@ -296,6 +339,78 @@
         </li>
       </ol>
     </section>
+    <section class="building" id="building">
+      <h2>Building</h2>
+      <p class="building-intro">
+        Open-source and side projects I ship end-to-end with AI coding agents,
+        mostly around agents, MCP, and developer tooling.
+      </p>
+      <div class="project-grid">
+        <article class="project-card">
+          <p class="work-kicker">TypeScript &middot; MCP</p>
+          <h3><a href="https://github.com/apurwa/gdocs-mcp" target="_blank" rel="noopener">gdocs-mcp</a></h3>
+          <p>
+            Open-source MCP server for Google Docs &amp; Sheets. Self-hosted with local
+            OAuth, so tokens never leave your machine or touch a third party.
+          </p>
+          <div class="project-links">
+            <a class="project-repo" href="https://github.com/apurwa/gdocs-mcp" target="_blank" rel="noopener" aria-label="gdocs-mcp on GitHub (opens in new tab)">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.82 1.1.82 2.22 0 1.61-.02 2.9-.02 3.29 0 .32.22.7.83.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/></svg>
+              <span>GitHub</span>
+            </a>
+            <a class="project-repo" href="https://www.npmjs.com/package/gdocs-mcp" target="_blank" rel="noopener" aria-label="gdocs-mcp on npm (opens in new tab)">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg>
+              <span>npm</span>
+            </a>
+          </div>
+        </article>
+        <article class="project-card">
+          <p class="work-kicker">Node.js &middot; CLI</p>
+          <h3><a href="https://github.com/apurwa/zz" target="_blank" rel="noopener">cc &middot; Command Center</a></h3>
+          <p>
+            A CLI that orchestrates parallel Claude Code agent sessions across projects,
+            driving each in its own tmux pane so several agents work at once.
+          </p>
+          <a class="project-repo" href="https://github.com/apurwa/zz" target="_blank" rel="noopener" aria-label="Command Center on GitHub (opens in new tab)">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.82 1.1.82 2.22 0 1.61-.02 2.9-.02 3.29 0 .32.22.7.83.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/></svg>
+            <span>View on GitHub</span>
+          </a>
+        </article>
+        <article class="project-card">
+          <p class="work-kicker">TypeScript &middot; Agents</p>
+          <h3><a href="https://github.com/apurwa/browser-agent-chat" target="_blank" rel="noopener">browser-agent-chat</a></h3>
+          <p>
+            A web chat app for driving a live browser agent, with a streamed view of the
+            browser so you can watch the agent work in real time.
+          </p>
+          <a class="project-repo" href="https://github.com/apurwa/browser-agent-chat" target="_blank" rel="noopener" aria-label="browser-agent-chat on GitHub (opens in new tab)">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.82 1.1.82 2.22 0 1.61-.02 2.9-.02 3.29 0 .32.22.7.83.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/></svg>
+            <span>View on GitHub</span>
+          </a>
+        </article>
+        <article class="project-card">
+          <p class="work-kicker">Security &middot; Agents</p>
+          <h3>SafeAgents</h3>
+          <p>
+            An assurance layer for AI agents: adversarial agents pentest an enterprise
+            agent before production and issue an independent security report.
+          </p>
+          <span class="project-status">Building now</span>
+        </article>
+        <article class="project-card">
+          <p class="work-kicker">C++ &middot; Hardware</p>
+          <h3><a href="https://github.com/apurwa/esp32-home-monitor" target="_blank" rel="noopener">esp32-home-monitor</a></h3>
+          <p>
+            Reproducible ESP32-S3 board bring-up and a BME280 home-environment monitor.
+            A hands-on hardware side quest, documented end to end.
+          </p>
+          <a class="project-repo" href="https://github.com/apurwa/esp32-home-monitor" target="_blank" rel="noopener" aria-label="esp32-home-monitor on GitHub (opens in new tab)">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.82 1.1.82 2.22 0 1.61-.02 2.9-.02 3.29 0 .32.22.7.83.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/></svg>
+            <span>View on GitHub</span>
+          </a>
+        </article>
+      </div>
+    </section>
     <section class="education" id="education">
       <h2>Education</h2>
       <div class="edu-row">
@@ -303,8 +418,10 @@
           <h3>Indian Institute of Technology, Roorkee</h3>
           <p class="muted">B.Tech, Electrical Engineering</p>
           <p>
-            President, Students' Affairs Council, led student governance reforms and a
-            landmark 24/7 campus access initiative benefiting 10K+ students.
+            Elected to three consecutive student-government roles, culminating as
+            President of the Students' Affairs Council. Represented 10,000+ students to
+            the administration and drove governance reforms, including a landmark 24/7
+            campus-access initiative.
           </p>
         </div>
         <span class="dates">2013 - 2017</span>
@@ -367,11 +484,25 @@
         agents, or just interesting problems. If something here connects, reach out. I am always
         up for a good conversation, a sharp idea, or a small thing worth building together.
       </p>
-      <ul class="links" aria-label="Contact links">
-        <li><a href="mailto:apurvsingh28@gmail.com">Email</a></li>
-        <li><a href="https://www.linkedin.com/in/apurwa-sarwajit" rel="me">LinkedIn</a></li>
-        <li><a href="https://github.com/apurwa" rel="me">GitHub</a></li>
-      </ul>
+      <nav class="contact-quick contact-quick--footer" aria-label="Contact links">
+        <a class="icon-link email-copy" href="mailto:apurvsingh28@gmail.com" data-email="apurvsingh28@gmail.com" aria-label="Copy email address">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="m3.5 7.5 8.5 6 8.5-6"/>
+          </svg>
+          <span class="copied-toast" aria-hidden="true">Copied!</span>
+        </a>
+        <a class="icon-link" href="https://www.linkedin.com/in/apurwa-sarwajit" rel="me noopener" target="_blank" aria-label="LinkedIn (opens in new tab)">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.47-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.8 0 0 .78 0 1.73v20.53C0 23.22.8 24 1.77 24h20.45C23.2 24 24 23.22 24 22.27V1.73C24 .78 23.2 0 22.22 0z"/>
+          </svg>
+        </a>
+        <a class="icon-link" href="https://github.com/apurwa" rel="me noopener" target="_blank" aria-label="GitHub (opens in new tab)">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.82 1.1.82 2.22 0 1.61-.02 2.9-.02 3.29 0 .32.22.7.83.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/>
+          </svg>
+        </a>
+      </nav>
     </section>
   </main>
   <footer>
@@ -379,6 +510,7 @@
   </footer>
   <div class="cursor-dot" aria-hidden="true"></div>
   <div class="cursor-ring" aria-hidden="true"></div>
-  <script src="script.js?v=20260529-5"></script>
+  <script src="script.js?v=20260717-1"></script>
+  <script type="module" src="bg3d.js?v=3"></script>
 </body>
 </html>
