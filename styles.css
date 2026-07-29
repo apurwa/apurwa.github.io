@@ -909,6 +909,115 @@ a:hover {
   color: var(--fg);
 }
 
+/* Building (open-source / side projects) */
+.building {
+  margin-bottom: 3rem;
+}
+
+.building-intro {
+  margin: -0.5rem 0 1.5rem;
+  max-width: 46em;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.project-card {
+  background: rgba(241, 235, 217, 0.5);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 1.1rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.project-card::before {
+  background: linear-gradient(90deg, var(--accent), transparent);
+  content: "";
+  height: 1px;
+  left: 0;
+  right: 45%;
+  top: 0;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.project-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 18px 40px rgba(125, 106, 43, 0.1);
+  transform: translateY(-0.25rem);
+}
+
+.project-card:hover::before {
+  opacity: 1;
+}
+
+.project-card h3 {
+  color: var(--accent);
+  font-size: 0.9375rem;
+  margin: 0 0 0.6rem;
+  overflow-wrap: break-word;
+}
+
+.project-card h3 a {
+  color: inherit;
+  border-bottom: 0;
+}
+
+.project-card h3 a:hover {
+  color: var(--hover);
+}
+
+.project-card p {
+  font-size: 0.875rem;
+  margin: 0;
+  flex: 1;
+}
+
+.project-repo,
+.project-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(215, 199, 131, 0.72);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.project-repo {
+  border-bottom: 0;
+  transition: color 0.16s ease;
+}
+
+.project-repo svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+}
+
+.project-repo:hover {
+  color: var(--accent);
+}
+
+.project-status::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--signal);
+  flex: 0 0 auto;
+}
+
 /* Thinking */
 .thinking {
   margin-bottom: 3rem;
@@ -1175,6 +1284,10 @@ body.has-custom-cursor.is-cursor-hovering .cursor-ring {
   .skill-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+
+  .project-grid {
+    grid-template-columns: 1fr;
   }
 
   .edu-row {
