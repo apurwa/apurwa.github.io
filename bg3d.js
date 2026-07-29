@@ -54,9 +54,10 @@ function init(THREE) {
     pos[i * 3] = (Math.random() - 0.5) * BOUNDS.x * 2;
     pos[i * 3 + 1] = (Math.random() - 0.5) * BOUNDS.y * 2;
     pos[i * 3 + 2] = (Math.random() - 0.5) * BOUNDS.z * 2;
-    vel[i * 3] = (Math.random() - 0.5) * 0.0035;
-    vel[i * 3 + 1] = (Math.random() - 0.5) * 0.0028;
-    vel[i * 3 + 2] = (Math.random() - 0.5) * 0.0015;
+    // base ambient drift, slowed 40% so it doesn't distract while reading
+    vel[i * 3] = (Math.random() - 0.5) * 0.0021;
+    vel[i * 3 + 1] = (Math.random() - 0.5) * 0.00168;
+    vel[i * 3 + 2] = (Math.random() - 0.5) * 0.0009;
     (Math.random() < 0.07 ? ember : olive).toArray(col, i * 3);
   }
   const geo = new THREE.BufferGeometry();

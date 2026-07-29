@@ -1009,6 +1009,21 @@ a:hover {
   color: var(--accent);
 }
 
+/* multi-link footer (e.g. GitHub + npm): divider sits on the wrapper */
+.project-links {
+  display: flex;
+  gap: 1.1rem;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(215, 199, 131, 0.72);
+}
+
+.project-links .project-repo {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .project-status::before {
   content: "";
   width: 0.5rem;
