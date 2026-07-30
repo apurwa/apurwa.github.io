@@ -979,6 +979,10 @@ a:hover {
 .project-card p {
   font-size: 0.875rem;
   margin: 0;
+}
+/* only the description grows, so kicker + title stay pinned together
+   when a taller sibling stretches the row */
+.project-card h3 + p {
   flex: 1;
 }
 
